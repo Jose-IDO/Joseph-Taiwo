@@ -6,7 +6,8 @@
 "scripts": {
   "dev": "next dev",
   "build": "next build",
-  "deploy": "next build; powershell -NoProfile -ExecutionPolicy Bypass -Command \"Remove-Item ..\\docs -Recurse -Force -ErrorAction SilentlyContinue; Copy-Item out ..\\docs -Recurse -Force\"",
+  "deploy": "npm run build && npm run copy-to-docs",
+  "copy-to-docs": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Remove-Item ..\\docs -Recurse -Force -ErrorAction SilentlyContinue; Copy-Item out ..\\docs -Recurse -Force; New-Item -ItemType File -Path ..\\docs\\.nojekyll -Force\"",
   "start": "next start",
   "lint": "eslint"
 },
