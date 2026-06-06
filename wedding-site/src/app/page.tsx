@@ -164,8 +164,7 @@ function AudioPlayer() {
 
     if (!audio) return;
 
-    let fadeInterval: window.ReturnType<typeof window.setInterval> | null =
-      null;
+    let fadeInterval: number | null = null;
 
     const fadeIn = () => {
       let volume = 0;
