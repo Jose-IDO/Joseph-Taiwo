@@ -2,13 +2,14 @@
   "name": "wedding-site",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "deploy": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
+
+"scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "deploy": "next build; powershell -NoProfile -ExecutionPolicy Bypass -Command \"Remove-Item ..\\docs -Recurse -Force -ErrorAction SilentlyContinue; Copy-Item out ..\\docs -Recurse -Force\"",
+  "start": "next start",
+  "lint": "eslint"
+},
   "dependencies": {
     "framer-motion": "^12.40.0",
     "lucide-react": "^1.17.0",
