@@ -1,18 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  Cormorant_Garamond,
-  Dancing_Script,
-  Playfair_Display,
-} from "next/font/google";
-import {
-  motion,
-  useMotionValueEvent,
-  useScroll,
-  useSpring,
-  useTransform,
-} from "framer-motion";
+import { Cormorant_Garamond, Dancing_Script } from "next/font/google";
+import { motion, useScroll, useSpring, useTransform } from "framer-motion";
 
 const dancingScript = Dancing_Script({
   subsets: ["latin"],
@@ -20,11 +10,6 @@ const dancingScript = Dancing_Script({
 });
 
 const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const playfair = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -154,46 +139,11 @@ function BotanicalLine({ className = "" }: { className?: string }) {
   );
 }
 
-function AnimatedCaption({
-  caption,
-  startDelay,
-  shouldAnimate,
-}: {
-  caption: string;
-  startDelay: number;
-  shouldAnimate: boolean;
-}) {
-  return (
-    <div
-      className={`${playfair.className} absolute bottom-3 left-0 right-0 text-center text-[1.4rem] font-medium tracking-[0.08em] text-[#4e6280] md:text-[1.55rem]`}
-    >
-      {caption.split("").map((letter, index) => (
-        <motion.span
-          key={`${caption}-${index}-${shouldAnimate}`}
-          initial={{ opacity: 0, y: 8 }}
-          animate={shouldAnimate ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
-          transition={{
-            duration: 0.38,
-            ease: "easeOut",
-            delay: shouldAnimate ? startDelay + index * 0.13 : 0,
-          }}
-          className="inline-block"
-        >
-          {letter === " " ? "\u00A0" : letter}
-        </motion.span>
-      ))}
-    </div>
-  );
-}
-
 function Polaroid({
   id,
   className,
   rotate,
   tapePosition = "top",
-  caption,
-  captionDelay,
-  shouldAnimateCaption,
   hoveredFrame,
   setHoveredFrame,
 }: {
@@ -201,9 +151,6 @@ function Polaroid({
   className?: string;
   rotate: number;
   tapePosition?: "top" | "bottom";
-  caption: string;
-  captionDelay: number;
-  shouldAnimateCaption: boolean;
   hoveredFrame: string | null;
   setHoveredFrame: (id: string | null) => void;
 }) {
@@ -215,10 +162,11 @@ function Polaroid({
       onMouseEnter={() => setHoveredFrame(id)}
       onMouseLeave={() => setHoveredFrame(null)}
       animate={{
-        scale: isHovered ? 1.45 : 1,
+        scale: isHovered ? 1.55 : 1,
         rotate: isHovered ? 0 : rotate,
-        opacity: isAnotherHovered ? 0.42 : 1,
-        zIndex: isHovered ? 120 : id === "journey" ? 70 : id === "thus" ? 50 : 40,
+        opacity: isAnotherHovered ? 0.65 : 1,
+        zIndex:
+          isHovered ? 120 : id === "journey" ? 70 : id === "thus" ? 50 : 40,
       }}
       transition={{ duration: 0.42, ease: "easeOut" }}
       className={`absolute h-[295px] w-[240px] cursor-pointer bg-white p-3 pb-14 shadow-[0_24px_50px_rgba(36,59,90,0.16)] ${
@@ -232,22 +180,14 @@ function Polaroid({
           tapePosition === "top" ? "-top-3" : "-bottom-3"
         }`}
       />
-
-      <AnimatedCaption
-        caption={caption}
-        startDelay={captionDelay}
-        shouldAnimate={shouldAnimateCaption}
-      />
     </motion.div>
   );
 }
 
 function PolaroidFrames({
-  shouldAnimateCaptions,
   hoveredFrame,
   setHoveredFrame,
 }: {
-  shouldAnimateCaptions: boolean;
   hoveredFrame: string | null;
   setHoveredFrame: (id: string | null) => void;
 }) {
@@ -258,45 +198,33 @@ function PolaroidFrames({
 
       <Polaroid
         id="our"
-        className="left-[95px] top-[10px]"
+        className="left-[95px] top-[45px]"
         rotate={-4}
-        caption="Our"
-        captionDelay={0}
-        shouldAnimateCaption={shouldAnimateCaptions}
         hoveredFrame={hoveredFrame}
         setHoveredFrame={setHoveredFrame}
       />
 
       <Polaroid
         id="journey"
-        className="right-[95px] top-[45px]"
+        className="right-[95px] top-[80px]"
         rotate={7}
-        caption="journey"
-        captionDelay={0.55}
-        shouldAnimateCaption={shouldAnimateCaptions}
         hoveredFrame={hoveredFrame}
         setHoveredFrame={setHoveredFrame}
       />
 
       <Polaroid
         id="thus"
-        className="left-[95px] bottom-[25px]"
+        className="left-[95px] bottom-[0px]"
         rotate={4}
-        caption="thus"
-        captionDelay={1.6}
-        shouldAnimateCaption={shouldAnimateCaptions}
         hoveredFrame={hoveredFrame}
         setHoveredFrame={setHoveredFrame}
       />
 
       <Polaroid
         id="far"
-        className="right-[110px] bottom-[5px]"
+        className="right-[110px] bottom-[-20px]"
         rotate={-3}
         tapePosition="bottom"
-        caption="far..."
-        captionDelay={2.35}
-        shouldAnimateCaption={shouldAnimateCaptions}
         hoveredFrame={hoveredFrame}
         setHoveredFrame={setHoveredFrame}
       />
@@ -304,9 +232,77 @@ function PolaroidFrames({
   );
 }
 
+function ImageCarousel() {
+  const items = Array.from({ length: 6 });
+
+  return (
+    <div className="h-full w-[100dvw] overflow-hidden">
+      <motion.div
+        className="flex h-full w-max gap-0"
+        animate={{ x: ["0vw", "-100vw"] }}
+        transition={{
+          duration: 18,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      >
+        {[...items, ...items].map((_, index) => (
+          <div
+            key={index}
+            className="h-full w-[calc(100dvw/3)] shrink-0 bg-gradient-to-br from-[#c9c9c9] via-[#dedede] to-[#f2f2f2]"
+          />
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+function RSVPButton() {
+  return (
+    <motion.div
+      className="relative flex items-center justify-center"
+      animate={{ scale: [1, 1.035, 1] }}
+      transition={{
+        duration: 4,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    >
+      <div className="absolute h-24 w-80 rounded-full bg-[#c9a76b]/25 blur-2xl" />
+
+      <div className="flex items-center gap-6">
+        <span className="h-[2px] w-28 bg-gradient-to-r from-transparent via-[#c9a76b] to-[#c9a76b]" />
+
+        <motion.button
+          type="button"
+          whileHover={{
+            scale: 1.08,
+            y: -3,
+          }}
+          whileTap={{ scale: 0.97 }}
+          className="group relative overflow-hidden rounded-full border-2 border-[#c9a76b] bg-[#f8efe2] px-16 py-5 text-base font-black uppercase tracking-[0.42em] text-[#b88a3d] shadow-[0_28px_85px_rgba(36,59,90,0.18)] transition-all duration-300 hover:border-[#d6b06d] hover:shadow-[0_32px_100px_rgba(201,167,107,0.28)]"
+        >
+          <span
+            className="relative z-10 font-black"
+            style={{
+              textShadow: "0 1px 0 rgba(255,255,255,0.4)",
+              fontWeight: 900,
+            }}
+          >
+            RSVP
+          </span>
+
+          <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/65 to-transparent transition-transform duration-1000 group-hover:translate-x-full" />
+        </motion.button>
+
+        <span className="h-[2px] w-28 bg-gradient-to-l from-transparent via-[#c9a76b] to-[#c9a76b]" />
+      </div>
+    </motion.div>
+  );
+}
+
 function HeroSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
-  const [shouldAnimateCaptions, setShouldAnimateCaptions] = useState(false);
   const [hoveredFrame, setHoveredFrame] = useState<string | null>(null);
 
   const { scrollYProgress } = useScroll({
@@ -320,17 +316,12 @@ function HeroSection() {
     mass: 0.35,
   });
 
-  useMotionValueEvent(progress, "change", (latest) => {
-    if (latest > 0.28) setShouldAnimateCaptions(true);
-    if (latest < 0.15) setShouldAnimateCaptions(false);
-  });
-
   const introOpacity = useTransform(progress, [0, 0.18], [1, 0]);
   const inviteOpacity = useTransform(progress, [0, 0.18], [1, 0]);
   const dividerOpacity = useTransform(progress, [0, 0.18], [1, 0]);
 
-  const namesY = useTransform(progress, [0, 0.42], [0, -245]);
-  const namesScale = useTransform(progress, [0, 0.42], [1, 0.62]);
+  const namesY = useTransform(progress, [0, 0.42], [0, -165]);
+  const namesScale = useTransform(progress, [0, 0.42], [1, 0.74]);
 
   const detailsY = useTransform(progress, [0, 0.42], [0, 335]);
   const detailsScale = useTransform(progress, [0, 0.42], [1, 1.12]);
@@ -338,18 +329,33 @@ function HeroSection() {
   const heroTimerOpacity = useTransform(progress, [0, 0.16], [1, 0]);
   const fixedTimerOpacity = useTransform(progress, [0.18, 0.34], [0, 1]);
 
-  const polaroidOpacity = useTransform(progress, [0.16, 0.34], [0, 1]);
-  const polaroidY = useTransform(progress, [0.16, 0.42], [80, 0]);
-  const polaroidScale = useTransform(progress, [0.16, 0.42], [0.92, 1]);
+  const polaroidOpacity = useTransform(
+    progress,
+    [0.16, 0.34, 0.56, 0.66],
+    [0, 1, 1, 0]
+  );
+  const polaroidY = useTransform(progress, [0.16, 0.42, 0.66], [115, 45, -80]);
+  const polaroidScale = useTransform(
+    progress,
+    [0.16, 0.42, 0.66],
+    [0.92, 1, 0.92]
+  );
+
+  const carouselOpacity = useTransform(progress, [0.58, 0.64], [0, 1]);
+  const carouselX = useTransform(progress, [0.58, 0.64], ["100vw", "0vw"]);
+
+  const rsvpOpacity = useTransform(progress, [0.64, 0.74], [0, 1]);
+  const rsvpY = useTransform(progress, [0.64, 0.74], [48, 0]);
+  const rsvpScale = useTransform(progress, [0.64, 0.74], [0.92, 1]);
 
   return (
     <section
       ref={sectionRef}
-      className={`${cormorant.className} relative min-h-[220vh] bg-[#f3e7d6]`}
+      className={`${cormorant.className} relative min-h-[320vh] bg-[#f3e7d6]`}
     >
       <motion.div
         style={{ opacity: fixedTimerOpacity }}
-        className="fixed right-4 top-4 z-50 md:right-10 md:top-8"
+        className="fixed right-4 top-4 z-[100] md:right-10 md:top-8"
       >
         <CountdownTimer compact />
       </motion.div>
@@ -360,15 +366,30 @@ function HeroSection() {
         <div className="absolute -right-24 bottom-10 h-80 w-80 rounded-full bg-[#d8c3a5]/50 blur-3xl" />
         <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#d9e5f2]/40 to-transparent" />
 
-        <motion.div
-          animate={{ opacity: hoveredFrame ? 1 : 0 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          className="pointer-events-none fixed inset-0 z-30 bg-[#f3e7d6]/16 backdrop-blur-[2px]"
-        />
-
         <FloatingDust />
 
-        <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center px-6 text-center">
+        <motion.div
+          style={{
+            opacity: carouselOpacity,
+            x: carouselX,
+          }}
+          className="fixed left-0 right-0 top-1/2 z-30 hidden h-[460px] w-[100dvw] max-w-none -translate-y-1/2 overflow-hidden md:block"
+        >
+          <ImageCarousel />
+        </motion.div>
+
+        <motion.div
+          style={{
+            opacity: rsvpOpacity,
+            y: rsvpY,
+            scale: rsvpScale,
+          }}
+          className="fixed bottom-[155px] left-1/2 z-[80] hidden -translate-x-1/2 md:block"
+        >
+          <RSVPButton />
+        </motion.div>
+
+        <div className="relative z-40 mx-auto flex min-h-screen w-full max-w-6xl flex-col items-center justify-center px-6 text-center">
           <motion.p
             style={{ opacity: introOpacity }}
             initial={{ opacity: 0, y: 24 }}
@@ -384,10 +405,10 @@ function HeroSection() {
             initial={{ opacity: 0, y: 32 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 1.2 }}
-            className="origin-center"
+            className="relative z-[90] origin-center"
           >
             <h1
-              className={`${dancingScript.className} text-7xl font-semibold tracking-normal md:text-9xl`}
+              className={`${dancingScript.className} text-7xl font-semibold tracking-normal leading-[1.18] md:text-9xl`}
             >
               <span className="luxury-name-glow text-[#243b5a]">
                 Joseph
@@ -421,10 +442,9 @@ function HeroSection() {
               y: polaroidY,
               scale: polaroidScale,
             }}
-            className="absolute left-1/2 top-1/2 z-40 hidden -translate-x-1/2 -translate-y-1/2 md:block"
+            className="absolute left-1/2 top-[54%] z-50 hidden -translate-x-1/2 -translate-y-1/2 md:block"
           >
             <PolaroidFrames
-              shouldAnimateCaptions={shouldAnimateCaptions}
               hoveredFrame={hoveredFrame}
               setHoveredFrame={setHoveredFrame}
             />
