@@ -240,7 +240,7 @@ function AudioPlayer() {
 
   return (
     <>
-      <audio ref={audioRef} src="/audio/amen.mp3" loop preload="auto" />
+      <audio ref={audioRef} src="/wedding-website-/audio/amen.mp3" />
 
       <motion.button
         type="button"
