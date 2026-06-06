@@ -158,67 +158,101 @@ function getTimeLeft() {
 function AudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [started, setStarted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  useEffect(() => {
+  function fadeTo(audio: HTMLAudioElement, targetVolume: number) {
+    const step = targetVolume > audio.volume ? 0.01 : -0.01;
+
+    const interval = window.setInterval(() => {
+      const nextVolume = audio.volume + step;
+
+      if (
+        (step > 0 && nextVolume >= targetVolume) ||
+        (step < 0 && nextVolume <= targetVolume)
+      ) {
+        audio.volume = targetVolume;
+        window.clearInterval(interval);
+        return;
+      }
+
+      audio.volume = Math.max(0, Math.min(0.25, nextVolume));
+    }, 70);
+  }
+
+  async function startMusic() {
+    const audio = audioRef.current;
+
+    if (!audio || started) return;
+
+    try {
+      audio.volume = 0;
+      await audio.play();
+      fadeTo(audio, 0.25);
+      setStarted(true);
+      setIsPlaying(true);
+    } catch (error) {
+      console.log("Audio could not start yet:", error);
+    }
+  }
+
+  async function toggleMusic() {
     const audio = audioRef.current;
 
     if (!audio) return;
 
-    let fadeInterval: number | null = null;
+    try {
+      if (isPlaying) {
+        fadeTo(audio, 0);
 
-    const fadeIn = () => {
-      let volume = 0;
-      audio.volume = 0;
+        window.setTimeout(() => {
+          audio.pause();
+          setIsPlaying(false);
+        }, 700);
 
-      fadeInterval = window.setInterval(() => {
-        volume += 0.01;
-
-        if (volume >= 0.22) {
-          volume = 0.22;
-
-          if (fadeInterval) {
-            window.clearInterval(fadeInterval);
-          }
-        }
-
-        audio.volume = volume;
-      }, 180);
-    };
-
-    const startAudio = async () => {
-      if (started) return;
-
-      try {
-        audio.volume = 0;
-        await audio.play();
-        fadeIn();
-        setStarted(true);
-      } catch {
-        // Browser blocked autoplay. First tap/click will unlock it below.
+        return;
       }
+
+      audio.volume = 0;
+      await audio.play();
+      fadeTo(audio, 0.25);
+      setStarted(true);
+      setIsPlaying(true);
+    } catch (error) {
+      console.log("Audio could not start:", error);
+    }
+  }
+
+  useEffect(() => {
+    const handleFirstScroll = () => {
+      startMusic();
     };
 
-    const unlockAudio = async () => {
-      await startAudio();
-    };
-
-    startAudio();
-
-    window.addEventListener("click", unlockAudio, { once: true });
-    window.addEventListener("touchstart", unlockAudio, { once: true });
+    window.addEventListener("scroll", handleFirstScroll, { once: true });
+    window.addEventListener("wheel", handleFirstScroll, { once: true });
+    window.addEventListener("touchmove", handleFirstScroll, { once: true });
 
     return () => {
-      if (fadeInterval) {
-        window.clearInterval(fadeInterval);
-      }
-
-      audio.pause();
-      window.removeEventListener("click", unlockAudio);
-      window.removeEventListener("touchstart", unlockAudio);
+      window.removeEventListener("scroll", handleFirstScroll);
+      window.removeEventListener("wheel", handleFirstScroll);
+      window.removeEventListener("touchmove", handleFirstScroll);
     };
   }, [started]);
 
-  return <audio ref={audioRef} src="/audio/amen.mp3" loop preload="auto" />;
+  return (
+    <>
+      <audio ref={audioRef} src="/audio/amen.mp3" loop preload="auto" />
+
+      <motion.button
+        type="button"
+        onClick={toggleMusic}
+        whileHover={{ scale: 1.04, y: -1 }}
+        whileTap={{ scale: 0.96 }}
+        className={`${playfair.className} fixed left-3 top-14 z-[110] rounded-full border border-[#c9a76b]/70 bg-[#f8efe2] px-4 py-2.5 text-[0.58rem] font-black uppercase tracking-[0.2em] text-[#a77b34] shadow-[0_16px_50px_rgba(36,59,90,0.12)] transition hover:border-[#b88a3d] hover:bg-[#fff8ed] sm:left-8 sm:top-20 sm:px-7 sm:py-3 sm:text-xs`}
+      >
+        {isPlaying ? "Music On" : "Play Music"}
+      </motion.button>
+    </>
+  );
 }
 
 function CountdownTimer({ compact = false }: { compact?: boolean }) {
