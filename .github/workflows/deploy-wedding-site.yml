@@ -1,0 +1,29 @@
+name: Deploy Wedding Site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+      - name: Install wedding-site dependencies
+        working-directory: wedding-site
+        run: npm ci
+      - name: Build and export wedding-site
+        working-directory: wedding-site
+        run: npm run deploy
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: wedding-site/out
