@@ -1,10 +1,10 @@
 1:"$Sreact.fragment"
-2:I[47257,["/wedding-website-/_next/static/chunks/158myu8e_yme3.js"],"ClientPageRoot"]
-3:I[52683,["/wedding-website-/_next/static/chunks/158myu8e_yme3.js","/wedding-website-/_next/static/chunks/2pc4ps4-63a7q.js"],"default"]
-6:I[97367,["/wedding-website-/_next/static/chunks/158myu8e_yme3.js"],"OutletBoundary"]
+2:I[47257,["/wedding-website/_next/static/chunks/158myu8e_yme3.js"],"ClientPageRoot"]
+3:I[52683,["/wedding-website/_next/static/chunks/158myu8e_yme3.js","/wedding-website/_next/static/chunks/0gzcpswa2aztj.js"],"default"]
+6:I[97367,["/wedding-website/_next/static/chunks/158myu8e_yme3.js"],"OutletBoundary"]
 7:"$Sreact.suspense"
-:HL["/wedding-website-/_next/static/chunks/0nz-h8aae5utw.css","style"]
-0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","link","0",{"rel":"stylesheet","href":"/wedding-website-/_next/static/chunks/0nz-h8aae5utw.css","precedence":"next"}],["$","script","script-0",{"src":"/wedding-website-/_next/static/chunks/2pc4ps4-63a7q.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"UtfATxdKtvzfRuj4IM3A6"}
+:HL["/wedding-website/_next/static/chunks/0nz-h8aae5utw.css","style"]
+0:{"rsc":["$","$1","c",{"children":[["$","$L2",null,{"Component":"$3","serverProvidedParams":{"searchParams":{},"params":{},"promises":["$@4","$@5"]}}],[["$","link","0",{"rel":"stylesheet","href":"/wedding-website/_next/static/chunks/0nz-h8aae5utw.css","precedence":"next"}],["$","script","script-0",{"src":"/wedding-website/_next/static/chunks/0gzcpswa2aztj.js","async":true}]],["$","$L6",null,{"children":["$","$7",null,{"name":"Next.MetadataOutlet","children":"$@8"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"DwcxSolglBfSsM3oqTs5E"}
 4:{}
 5:"$0:rsc:props:children:0:props:serverProvidedParams:params"
 8:null
