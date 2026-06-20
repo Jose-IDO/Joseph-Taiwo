@@ -68,6 +68,23 @@ const FIRST_NAMES = [
   "Joseph",
   "Ruth",
 ];
+const PHOTO_FILENAMES = [
+  "WhatsApp Image 2026-06-07 at 09.09.52.jpeg",
+  "WhatsApp Image 2026-06-07 at 09.10.13.jpeg",
+  "WhatsApp Image 2026-06-07 at 09.10.21 (1).jpeg",
+  "WhatsApp Image 2026-06-07 at 09.10.21.jpeg",
+  "WhatsApp Image 2026-06-07 at 09.10.22 (1).jpeg",
+  "WhatsApp Image 2026-06-07 at 09.10.22 (2).jpeg",
+  "WhatsApp Image 2026-06-07 at 09.10.22.jpeg",
+  "WhatsApp Image 2026-06-07 at 09.10.23.jpeg",
+];
+
+const CAROUSEL_IMAGES = PHOTO_FILENAMES.map(
+  (name) => `/${encodeURIComponent(name)}`
+);
+
+const POLAROID_IMAGES = CAROUSEL_IMAGES.slice(0, 4);
+
 
 function normalizeSurname(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, "-");
@@ -185,6 +202,8 @@ function AudioPlayer() {
     if (!audio || started) return;
 
     try {
+      // Try to unmute and fade in on first user gesture.
+      audio.muted = false;
       audio.volume = 0;
       await audio.play();
       fadeTo(audio, 0.25);
@@ -212,6 +231,8 @@ function AudioPlayer() {
         return;
       }
 
+      // If we haven't started playback yet, try to play (may be blocked until user gesture).
+      audio.muted = false;
       audio.volume = 0;
       await audio.play();
       fadeTo(audio, 0.25);
@@ -223,24 +244,49 @@ function AudioPlayer() {
   }
 
   useEffect(() => {
-    const handleFirstScroll = () => {
+    const audio = audioRef.current;
+
+    // Try a muted autoplay on mount — many browsers allow muted autoplay.
+    if (audio && !started) {
+      audio.muted = true;
+      audio.volume = 0;
+
+      audio.play().then(() => {
+        setStarted(true);
+        // We keep isPlaying=false until the user gesture un-mutes.
+        setIsPlaying(false);
+      }).catch(() => {
+        // muted autoplay failed — we'll wait for a gesture
+      });
+    }
+
+    const handleFirstGesture = () => {
+      // On first gesture, unmute and fade in.
       startMusic();
     };
 
-    window.addEventListener("scroll", handleFirstScroll, { once: true });
-    window.addEventListener("wheel", handleFirstScroll, { once: true });
-    window.addEventListener("touchmove", handleFirstScroll, { once: true });
+    window.addEventListener("scroll", handleFirstGesture, { once: true });
+    window.addEventListener("wheel", handleFirstGesture, { once: true });
+    window.addEventListener("touchmove", handleFirstGesture, { once: true });
+    window.addEventListener("pointerdown", handleFirstGesture, { once: true });
+    window.addEventListener("click", handleFirstGesture, { once: true });
+    window.addEventListener("keydown", handleFirstGesture, { once: true });
 
     return () => {
-      window.removeEventListener("scroll", handleFirstScroll);
-      window.removeEventListener("wheel", handleFirstScroll);
-      window.removeEventListener("touchmove", handleFirstScroll);
+      window.removeEventListener("scroll", handleFirstGesture);
+      window.removeEventListener("wheel", handleFirstGesture);
+      window.removeEventListener("touchmove", handleFirstGesture);
+      window.removeEventListener("pointerdown", handleFirstGesture);
+      window.removeEventListener("click", handleFirstGesture);
+      window.removeEventListener("keydown", handleFirstGesture);
     };
   }, [started]);
+ 
+  const audioSrc = `${process.env.NEXT_PUBLIC_BASE_PATH}/audio/amen.mp3`;
 
   return (
     <>
-      <audio ref={audioRef} src="/wedding-website-/audio/amen.mp3" />
+      <audio ref={audioRef} src={audioSrc} preload="auto" playsInline />
 
       <motion.button
         type="button"
@@ -401,6 +447,7 @@ function Polaroid({
   tapePosition = "top",
   hoveredFrame,
   setHoveredFrame,
+  image,
 }: {
   id: string;
   className?: string;
@@ -408,6 +455,7 @@ function Polaroid({
   tapePosition?: "top" | "bottom";
   hoveredFrame: string | null;
   setHoveredFrame: (id: string | null) => void;
+  image: string;
 }) {
   const isHovered = hoveredFrame === id;
   const isAnotherHovered = hoveredFrame !== null && !isHovered;
@@ -428,7 +476,13 @@ function Polaroid({
         isHovered ? "shadow-[0_45px_120px_rgba(36,59,90,0.35)]" : ""
       } ${className}`}
     >
-      <div className="h-full w-full rounded-[2px] bg-gradient-to-br from-[#c8c8c8] via-[#dddddd] to-[#f1f1f1]" />
+      <div className="h-full w-full overflow-hidden rounded-[2px] bg-[#dedede]">
+        <img
+          src={image}
+          alt={id}
+          className="h-full w-full object-cover object-center"
+        />
+      </div>
 
       <div
         className={`absolute left-1/2 h-5 w-12 -translate-x-1/2 bg-[#d8c3a5]/70 shadow-sm sm:h-7 sm:w-16 md:h-8 md:w-20 ${
@@ -453,6 +507,7 @@ function PolaroidFrames({
 
       <Polaroid
         id="our"
+        image={POLAROID_IMAGES[0]}
         className="left-[12px] top-[20px] min-[390px]:left-[14px] min-[390px]:top-[24px] sm:left-[70px] sm:top-[45px] md:left-[95px]"
         rotate={-4}
         hoveredFrame={hoveredFrame}
@@ -461,6 +516,7 @@ function PolaroidFrames({
 
       <Polaroid
         id="journey"
+        image={POLAROID_IMAGES[1]}
         className="right-[12px] top-[48px] min-[390px]:right-[14px] min-[390px]:top-[58px] sm:right-[70px] sm:top-[80px] md:right-[95px]"
         rotate={7}
         hoveredFrame={hoveredFrame}
@@ -469,6 +525,7 @@ function PolaroidFrames({
 
       <Polaroid
         id="thus"
+        image={POLAROID_IMAGES[2]}
         className="bottom-[44px] left-[12px] min-[390px]:bottom-[48px] min-[390px]:left-[14px] sm:bottom-[0px] sm:left-[70px] md:left-[95px]"
         rotate={4}
         hoveredFrame={hoveredFrame}
@@ -477,6 +534,7 @@ function PolaroidFrames({
 
       <Polaroid
         id="far"
+        image={POLAROID_IMAGES[3]}
         className="bottom-[20px] right-[12px] min-[390px]:bottom-[22px] min-[390px]:right-[14px] sm:bottom-[-20px] sm:right-[85px] md:right-[110px]"
         rotate={-3}
         tapePosition="bottom"
@@ -488,7 +546,7 @@ function PolaroidFrames({
 }
 
 function ImageCarousel() {
-  const items = Array.from({ length: 6 });
+  const carouselImages = [...CAROUSEL_IMAGES, ...CAROUSEL_IMAGES];
 
   return (
     <div className="h-full w-[100dvw] overflow-hidden">
@@ -501,11 +559,19 @@ function ImageCarousel() {
           ease: "linear",
         }}
       >
-        {[...items, ...items].map((_, index) => (
+        {carouselImages.map((src, index) => (
           <div
-            key={index}
-            className="h-full w-[100dvw] shrink-0 bg-gradient-to-br from-[#c9c9c9] via-[#dedede] to-[#f2f2f2] sm:w-[50dvw] md:w-[calc(100dvw/3)]"
-          />
+            key={`${src}-${index}`}
+            className="relative h-full w-[100dvw] shrink-0 overflow-hidden bg-[#dedede] sm:w-[50dvw] md:w-[calc(100dvw/3)]"
+          >
+            <img
+              src={src}
+              alt={`Carousel photo ${(index % CAROUSEL_IMAGES.length) + 1}`}
+              className="h-full w-full object-cover object-center"
+              loading={index < CAROUSEL_IMAGES.length ? "eager" : "lazy"}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#243b5a]/10 via-transparent to-transparent" />
+          </div>
         ))}
       </motion.div>
     </div>
@@ -674,6 +740,204 @@ function DressCodeSection() {
   );
 }
 
+
+function MapPinIcon({ active = false }: { active?: boolean }) {
+  return (
+    <motion.div
+      animate={{
+        y: active ? -5 : 0,
+        scale: active ? 1.08 : 1,
+      }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="relative flex h-[58px] w-[58px] items-center justify-center"
+    >
+      <motion.span
+        animate={{
+          opacity: active ? [0.22, 0.5, 0.22] : 0,
+          scale: active ? [0.88, 1.18, 0.88] : 0.88,
+        }}
+        transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute inset-0 rounded-full bg-[#c9a76b]/35 blur-xl"
+      />
+
+      <motion.svg
+        width="52"
+        height="52"
+        viewBox="0 0 24 24"
+        fill="none"
+        className="relative z-10 drop-shadow-[0_14px_26px_rgba(185,28,28,0.24)]"
+      >
+        <motion.path
+          d="M12 22s7-6.2 7-13A7 7 0 0 0 5 9c0 6.8 7 13 7 13Z"
+          fill={active ? "#b91c1c" : "#c62828"}
+          animate={{
+            filter: active
+              ? [
+                  "drop-shadow(0 0 0 rgba(201,167,107,0))",
+                  "drop-shadow(0 0 12px rgba(201,167,107,0.72))",
+                  "drop-shadow(0 0 0 rgba(201,167,107,0))",
+                ]
+              : "drop-shadow(0 0 0 rgba(201,167,107,0))",
+          }}
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <circle cx="12" cy="9" r="2.6" fill="#fff8ed" />
+      </motion.svg>
+    </motion.div>
+  );
+}
+
+function LocationMapsSection() {
+  const [activeLocation, setActiveLocation] = useState<
+    "church" | "reception" | null
+  >(null);
+
+    const locations = [
+      {
+        id: "church" as const,
+        title: "Church Ceremony",
+        address: "St Hilda Parish Church, Pretoria, South Africa",
+        mapQuery: "St Hilda Parish Church Pretoria South Africa",
+      },
+      {
+        id: "reception" as const,
+        title: "Reception",
+        address: "Silver Lakes Farm Hotel, Pretoria, South Africa",
+        mapQuery: "Silver Lakes Farm Hotel Pretoria South Africa",
+      },
+    ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 34 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.25 }}
+      transition={{ duration: 0.75, ease: "easeOut" }}
+      className="mx-auto mt-24 flex w-full max-w-5xl flex-col items-center text-center sm:mt-32"
+    >
+      <p className="mb-3 text-xs uppercase tracking-[0.42em] text-[#9c8261]">
+        Locations
+      </p>
+
+      <motion.h2
+        initial={{ opacity: 0, y: 18 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.65 }}
+        className={`${playfair.className} mb-16 text-5xl font-black text-[#243b5a] sm:text-7xl`}
+      >
+        Where to be
+      </motion.h2>
+
+      <div className="flex w-full flex-col items-center gap-20 sm:gap-24">
+        {locations.map((location) => {
+          const isActive = activeLocation === location.id;
+
+          return (
+            <div
+              key={location.id}
+              onMouseEnter={() => setActiveLocation(location.id)}
+              onMouseLeave={() => setActiveLocation(null)}
+              onFocus={() => setActiveLocation(location.id)}
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) {
+                  setActiveLocation(null);
+                }
+              }}
+              className="flex w-full flex-col items-center"
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  setActiveLocation((current) =>
+                    current === location.id ? null : location.id
+                  )
+                }
+                className="group flex flex-col items-center outline-none"
+              >
+                <MapPinIcon active={isActive} />
+
+                <span
+                  className={`${playfair.className} relative mt-4 text-xl font-black uppercase tracking-[0.24em] text-[#9c6f2d] transition duration-300 group-hover:text-[#b91c1c] sm:text-3xl`}
+                >
+                  {location.title}
+
+                  <span className="absolute -bottom-3 left-1/2 h-px w-[115%] -translate-x-1/2 bg-gradient-to-r from-transparent via-[#b88a3d] to-transparent" />
+                  <span className="absolute -bottom-5 left-1/2 h-px w-[72%] -translate-x-1/2 bg-gradient-to-r from-transparent via-[#d8c3a5] to-transparent" />
+                </span>
+              </button>
+
+              <AnimatePresence mode="wait">
+                {isActive && (
+                  <motion.div
+                    key={location.id}
+                    initial={{
+                      opacity: 0,
+                      y: 30,
+                      scale: 0.96,
+                      filter: "blur(10px)",
+                    }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      scale: 1,
+                      filter: "blur(0px)",
+                    }}
+                    exit={{
+                      opacity: 0,
+                      y: 18,
+                      scale: 0.96,
+                      filter: "blur(10px)",
+                    }}
+                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                    className="mt-12 w-full max-w-4xl overflow-hidden rounded-[2rem] border border-[#c9a76b]/35 bg-[#fff8ed]/95 shadow-[0_34px_120px_rgba(36,59,90,0.18)] backdrop-blur"
+                  >
+                    <div className="px-5 py-7 text-center sm:px-8 sm:py-8">
+                      <h3
+                        className={`${playfair.className} text-2xl font-black uppercase tracking-[0.2em] text-[#b91c1c] sm:text-4xl`}
+                      >
+                        {location.title}
+                      </h3>
+
+                      <div className="mx-auto my-5 h-px w-44 bg-gradient-to-r from-transparent via-[#c9a76b] to-transparent" />
+
+                      <p className="text-sm leading-7 text-[#4d5f78] sm:text-base">
+                        {location.address}
+                      </p>
+
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                          location.mapQuery
+                        )}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-4 inline-block text-sm font-bold text-[#b91c1c] underline decoration-[#b88a3d] underline-offset-4"
+                      >
+                        View on Google Maps
+                      </a>
+                    </div>
+
+                    <div className="h-[270px] w-full sm:h-[390px]">
+                      <iframe
+                        title={`${location.title} map`}
+                        src={`https://www.google.com/maps?q=${encodeURIComponent(
+                          location.mapQuery
+                        )}&output=embed`}
+                        className="h-full w-full border-0"
+                        loading="lazy"
+                        referrerPolicy="no-referrer-when-downgrade"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
 function OrderOfDaySection() {
   const events = [
     ["11:00 AM", "Church Ceremony"],
@@ -738,6 +1002,8 @@ function OrderOfDaySection() {
             ))}
           </div>
         </div>
+
+        <LocationMapsSection />
 
         <motion.div
           initial={{ opacity: 0, y: 28 }}
