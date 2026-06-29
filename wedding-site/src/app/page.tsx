@@ -220,7 +220,7 @@ function AudioPlayer() {
     };
   }, [started]);
  
-  const audioSrc = `${process.env.NEXT_PUBLIC_BASE_PATH}/audio/amen.mp3`;
+ const audioSrc = "/audio/amen.mp3";
 
   return (
     <>
