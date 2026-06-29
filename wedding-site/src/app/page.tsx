@@ -35,6 +35,7 @@ const playfair = Playfair_Display({
 });
 
 const WEDDING_DATE = new Date("2026-12-12T11:00:00+02:00").getTime();
+const RSVP_DEADLINE = "30 September 2026";
 
 type FamilyMember = {
   id: string;
@@ -231,7 +232,7 @@ function AudioPlayer() {
         onClick={toggleMusic}
         whileHover={{ scale: 1.04, y: -1 }}
         whileTap={{ scale: 0.96 }}
-        className={`${playfair.className} fixed left-3 top-14 z-[110] rounded-full border border-[#c9a76b]/70 bg-[#f8efe2] px-4 py-2.5 text-[0.58rem] font-black uppercase tracking-[0.2em] text-[#a77b34] shadow-[0_16px_50px_rgba(36,59,90,0.12)] transition hover:border-[#b88a3d] hover:bg-[#fff8ed] sm:left-8 sm:top-20 sm:px-7 sm:py-3 sm:text-xs`}
+        className={`${playfair.className} fixed left-3 top-[3.35rem] z-[110] min-w-[104px] rounded-full border border-[#c9a76b]/70 bg-[#f8efe2] px-4 py-2.5 text-center text-[0.58rem] font-black uppercase tracking-[0.2em] text-[#a77b34] shadow-[0_16px_50px_rgba(36,59,90,0.12)] transition hover:border-[#b88a3d] hover:bg-[#fff8ed] sm:left-8 sm:top-[4.8rem] sm:min-w-[150px] sm:px-7 sm:py-3 sm:text-xs`}
       >
         {isPlaying ? "Music On" : "Play Music"}
       </motion.button>
@@ -585,7 +586,7 @@ function DressCodeSection() {
 
             <div className="mb-5 flex flex-wrap justify-center gap-4">
               <div className="flex flex-col items-center gap-2">
-                <span className="h-12 w-12 rounded-full border border-[#c9a76b]/50 bg-[#f4dfbd] shadow-inner" />
+                <span className="h-12 w-12 rounded-full border border-[#d8b77e]/70 bg-[radial-gradient(circle_at_30%_22%,#fff8e8_0%,#f6e4c1_28%,#d8b77e_62%,#b88a3d_100%)] shadow-[inset_0_4px_10px_rgba(255,255,255,0.7),inset_0_-8px_14px_rgba(120,82,35,0.16),0_10px_24px_rgba(201,167,107,0.22)]" />
                 <span className="text-xs uppercase tracking-[0.2em] text-[#6f7f96]">
                   Champagne
                 </span>
@@ -858,8 +859,8 @@ function LocationMapsSection() {
 function OrderOfDaySection() {
   const events = [
     ["11:00", "Church Ceremony"],
-    ["14:00", "Cocktail Hour & Photography"],
-    ["15:00", "Reception"],
+    ["13:30", "Cocktail Hour & Photography"],
+    ["14:30", "Reception"],
     ["19:00", "End of Reception"],
   ];
 
@@ -962,7 +963,7 @@ function RegistryButton({ onClick }: { onClick: () => void }) {
         repeat: Infinity,
         ease: "easeInOut",
       }}
-      className={`${playfair.className} fixed left-3 top-3 z-[110] rounded-full border border-[#c9a76b]/70 bg-[#f8efe2] px-4 py-2.5 text-[0.58rem] font-black uppercase tracking-[0.2em] text-[#a77b34] shadow-[0_16px_50px_rgba(36,59,90,0.12)] transition hover:border-[#b88a3d] hover:bg-[#fff8ed] sm:left-8 sm:top-8 sm:px-7 sm:py-3 sm:text-xs sm:tracking-[0.24em]`}
+      className={`${playfair.className} fixed left-3 top-3 z-[110] min-w-[104px] rounded-full border border-[#c9a76b]/70 bg-[#f8efe2] px-4 py-2.5 text-center text-[0.58rem] font-black uppercase tracking-[0.2em] text-[#a77b34] shadow-[0_16px_50px_rgba(36,59,90,0.12)] transition hover:border-[#b88a3d] hover:bg-[#fff8ed] sm:left-8 sm:top-8 sm:min-w-[150px] sm:px-7 sm:py-3 sm:text-xs sm:tracking-[0.24em]`}
     >
       Registry
     </motion.button>
@@ -1008,6 +1009,21 @@ function RSVPButton({ onClick }: { onClick: () => void }) {
         <span className="h-[2px] w-7 bg-gradient-to-l from-transparent via-[#c9a76b] to-[#c9a76b] sm:w-28" />
       </div>
     </motion.div>
+  );
+}
+
+
+function FloatingRSVPButton({ onClick }: { onClick: () => void }) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      whileHover={{ scale: 1.04, y: -1 }}
+      whileTap={{ scale: 0.96 }}
+      className={`${playfair.className} rounded-full border border-[#c9a76b]/70 bg-[#f8efe2] px-4 py-2.5 text-[0.58rem] font-black uppercase tracking-[0.2em] text-[#a77b34] shadow-[0_16px_50px_rgba(36,59,90,0.12)] transition hover:border-[#b88a3d] hover:bg-[#fff8ed] sm:px-7 sm:py-3 sm:text-xs`}
+    >
+      RSVP
+    </motion.button>
   );
 }
 
@@ -1232,8 +1248,8 @@ function RSVPModal({ open, onClose }: { open: boolean; onClose: () => void }) {
     (member) => member.attendingChurch
   ).length;
 
-  const familyChurchLimit = family?.churchSeatLimit ?? 0;
-
+ const familyChurchLimit = familyMembers.length;
+ 
   function resetModal() {
     setStep("surname");
     setSurname("");
@@ -1597,6 +1613,10 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
               </p>
             )}
 
+            <p className="mx-auto mb-4 max-w-sm text-xs font-black uppercase tracking-[0.24em] text-[#9c6f2d]">
+              RSVP Deadline: {RSVP_DEADLINE}
+            </p>
+
             <motion.button
               type="submit"
               whileHover={{ scale: 1.04, y: -2 }}
@@ -1714,9 +1734,12 @@ function HeroSection() {
         <div ref={heroScrollRef} className="relative min-h-[340vh]">
           <motion.div
             style={{ opacity: fixedTimerOpacity }}
-            className="fixed right-3 top-14 z-[100] sm:right-4 sm:top-4 md:right-10 md:top-8"
+            className="fixed right-3 top-3 z-[100] sm:right-8 sm:top-8"
           >
-            <CountdownTimer compact />
+            <div className="flex flex-col items-end gap-2 sm:gap-3">
+              <CountdownTimer compact />
+              <FloatingRSVPButton onClick={() => setRsvpOpen(true)} />
+            </div>
           </motion.div>
 
           <div className="sticky top-0 flex min-h-screen items-center justify-center overflow-hidden">
@@ -1809,7 +1832,7 @@ function HeroSection() {
                 transition={{ duration: 1.2, delay: 0.55 }}
                 className="mt-5 flex origin-center flex-col items-center gap-2 sm:gap-3"
               >
-                <p className="text-[0.65rem] uppercase tracking-[0.32em] text-[#314a6d] sm:text-base sm:tracking-[0.5em] md:text-xl">
+                <p className={`${playfair.className} text-sm font-black uppercase tracking-[0.34em] text-[#314a6d] sm:text-xl sm:tracking-[0.5em] md:text-3xl`}>
                   12 December 2026
                 </p>
 

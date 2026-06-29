@@ -40,7 +40,8 @@ export async function POST(request: Request) {
     const familyData = familyDoc.data();
 
     const guestGroup = (familyData?.guestGroup ?? "bride-groom") as GuestGroup;
-    const familyChurchLimit = Number(familyData?.churchSeatLimit ?? 0);
+    const existingMembersSnapshot = await familyRef.collection("members").get();
+    const familyChurchLimit = existingMembersSnapshot.size;
     const previousFamilyChurchSeats = Number(familyData?.churchSeatsUsed ?? 0);
 
     const newFamilyChurchSeats = members.filter((member: SubmittedMember) =>
