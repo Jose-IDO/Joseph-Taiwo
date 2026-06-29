@@ -2,7 +2,6 @@
 
 import {
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -35,56 +34,54 @@ const playfair = Playfair_Display({
   weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-const WEDDING_DATE = new Date("2026-12-12T15:00:00+02:00").getTime();
-const TOTAL_CHURCH_SEATS = 100;
+const WEDDING_DATE = new Date("2026-12-12T11:00:00+02:00").getTime();
 
 type FamilyMember = {
-  name: string;
-  checked: boolean;
+  id: string;
+  fullName: string;
+  attendingWedding: boolean;
+  attendingChurch: boolean;
+  churchEligible: boolean;
 };
 
-type RSVPRecord = {
-  familyMembers: FamilyMember[];
-  churchAttending: boolean;
-  churchCount: number;
+type RSVPFamily = {
+  id: string;
+  surname: string;
+  familyNameKey: string;
+  guestGroup: "bride-groom" | "parents";
+  churchSeatLimit: number;
+  churchSeatsUsed: number;
+  contactEmail?: string;
+  contactPhone?: string;
+  rsvpStatus: string;
 };
 
 type RSVPStep = "surname" | "loading" | "family" | "success";
 
-const FIRST_NAMES = [
-  "Amina",
-  "Daniel",
-  "Grace",
-  "Isaac",
-  "Maya",
-  "Samuel",
-  "Naomi",
-  "David",
-  "Sarah",
-  "Joshua",
-  "Talia",
-  "Michael",
-  "Esther",
-  "Joseph",
-  "Ruth",
-];
 const PHOTO_FILENAMES = [
+  "WhatsApp Image 2026-06-20 at 20.15.351.JPG",
+  "WhatsApp Image 2026-06-07 at 09.10.22.jpeg",
+  "WhatsApp Image 2026-06-07 at 09.10.23.jpeg",
   "WhatsApp Image 2026-06-07 at 09.09.52.jpeg",
   "WhatsApp Image 2026-06-07 at 09.10.13.jpeg",
   "WhatsApp Image 2026-06-07 at 09.10.21 (1).jpeg",
   "WhatsApp Image 2026-06-07 at 09.10.21.jpeg",
   "WhatsApp Image 2026-06-07 at 09.10.22 (1).jpeg",
   "WhatsApp Image 2026-06-07 at 09.10.22 (2).jpeg",
-  "WhatsApp Image 2026-06-07 at 09.10.22.jpeg",
-  "WhatsApp Image 2026-06-07 at 09.10.23.jpeg",
+  "WhatsApp Image 2026-06-20 at 19.40.53 (1).jpeg",
+  "WhatsApp Image 2026-06-20 at 19.52.41.jpeg",
+  "WhatsApp Image 2026-06-20 at 20.14.38.jpeg",
+  "WhatsApp Image 2026-06-20 at 20.21.21 (1).JPG",
+  "WhatsApp Image 2026-06-20 at 20.30.26.JPG",
 ];
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 const CAROUSEL_IMAGES = PHOTO_FILENAMES.map(
-  (name) => `/${encodeURIComponent(name)}`
+  (name) => `${BASE_PATH}/${encodeURIComponent(name)}`
 );
 
 const POLAROID_IMAGES = CAROUSEL_IMAGES.slice(0, 4);
-
 
 function normalizeSurname(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, "-");
@@ -96,65 +93,6 @@ function titleCase(value: string) {
     .split(/\s+/)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
     .join(" ");
-}
-
-function getFamilyStorageKey(surname: string) {
-  return `rsvp-family-${normalizeSurname(surname)}`;
-}
-
-function getChurchReservations(): Record<string, number> {
-  if (typeof window === "undefined") return {};
-
-  const stored = window.localStorage.getItem("rsvp-church-reservations");
-
-  if (!stored) return {};
-
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return {};
-  }
-}
-
-function getChurchSeatsAvailable() {
-  const reservations = getChurchReservations();
-  const usedSeats = Object.values(reservations).reduce(
-    (total, count) => total + count,
-    0
-  );
-
-  return Math.max(TOTAL_CHURCH_SEATS - usedSeats, 0);
-}
-
-function saveChurchReservation(surnameKey: string, count: number) {
-  const reservations = getChurchReservations();
-
-  if (count <= 0) {
-    delete reservations[surnameKey];
-  } else {
-    reservations[surnameKey] = count;
-  }
-
-  window.localStorage.setItem(
-    "rsvp-church-reservations",
-    JSON.stringify(reservations)
-  );
-}
-
-function generateFamilyMembers(surname: string): FamilyMember[] {
-  const cleanSurname = titleCase(surname);
-  const seed = normalizeSurname(surname)
-    .split("")
-    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
-
-  return Array.from({ length: 5 }).map((_, index) => {
-    const firstName = FIRST_NAMES[(seed + index * 3) % FIRST_NAMES.length];
-
-    return {
-      name: `${firstName} ${cleanSurname}`,
-      checked: true,
-    };
-  });
 }
 
 function getTimeLeft() {
@@ -552,9 +490,9 @@ function ImageCarousel() {
     <div className="h-full w-[100dvw] overflow-hidden">
       <motion.div
         className="flex h-full w-max gap-0"
-        animate={{ x: ["0vw", "-100vw"] }}
+        animate={{ x: ["0%", "-50%"] }}
         transition={{
-          duration: 18,
+          duration: 42,
           repeat: Infinity,
           ease: "linear",
         }}
@@ -562,14 +500,16 @@ function ImageCarousel() {
         {carouselImages.map((src, index) => (
           <div
             key={`${src}-${index}`}
-            className="relative h-full w-[100dvw] shrink-0 overflow-hidden bg-[#dedede] sm:w-[50dvw] md:w-[calc(100dvw/3)]"
+            className="relative h-full w-[68dvw] shrink-0 overflow-hidden bg-[#dedede] sm:w-[34dvw] md:w-[24dvw]"
           >
             <img
               src={src}
               alt={`Carousel photo ${(index % CAROUSEL_IMAGES.length) + 1}`}
               className="h-full w-full object-cover object-center"
-              loading={index < CAROUSEL_IMAGES.length ? "eager" : "lazy"}
+              loading="eager"
+              draggable={false}
             />
+
             <div className="absolute inset-0 bg-gradient-to-t from-[#243b5a]/10 via-transparent to-transparent" />
           </div>
         ))}
@@ -596,50 +536,6 @@ function RootsWrap({ children }: { children: ReactNode }) {
           whileInView={{ pathLength: 1 }}
           viewport={{ once: true, amount: 0.25 }}
           transition={{ duration: 2.2, ease: "easeInOut" }}
-        />
-
-        <motion.path
-          d="M500 215 C430 278 405 348 428 445"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          strokeLinecap="round"
-          initial={{ pathLength: 0 }}
-          whileInView={{ pathLength: 1 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 1.4, delay: 0.45, ease: "easeInOut" }}
-        />
-
-        <motion.path
-          d="M500 215 C570 278 595 348 572 445"
-          stroke="currentColor"
-          strokeWidth="1.25"
-          strokeLinecap="round"
-          initial={{ pathLength: 0 }}
-          whileInView={{ pathLength: 1 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 1.4, delay: 0.55, ease: "easeInOut" }}
-        />
-
-        <motion.path
-          d="M428 445 C360 490 330 555 350 650"
-          stroke="currentColor"
-          strokeWidth="1.05"
-          strokeLinecap="round"
-          initial={{ pathLength: 0 }}
-          whileInView={{ pathLength: 1 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 1.3, delay: 0.8, ease: "easeInOut" }}
-        />
-
-        <motion.path
-          d="M572 445 C640 490 670 555 650 650"
-          stroke="currentColor"
-          strokeWidth="1.05"
-          strokeLinecap="round"
-          initial={{ pathLength: 0 }}
-          whileInView={{ pathLength: 1 }}
-          viewport={{ once: true, amount: 0.25 }}
-          transition={{ duration: 1.3, delay: 0.95, ease: "easeInOut" }}
         />
       </svg>
 
@@ -711,7 +607,14 @@ function DressCodeSection() {
             </div>
 
             <p className="text-sm leading-6 text-[#4d5f78]">
-              Please keep the blue as a subtle accent only.
+              Guests are warmly encouraged to wear shades of champagne, beige,
+              and soft neutral tones.
+            </p>
+
+            <p className="mt-3 text-sm leading-6 text-[#4d5f78]">
+              <span className="font-black text-[#243b5a]">
+                Please keep the blue as a subtle accent only.
+              </span>
             </p>
           </div>
 
@@ -723,16 +626,30 @@ function DressCodeSection() {
             <h3
               className={`${playfair.className} mb-5 text-3xl font-black text-[#243b5a] sm:text-4xl`}
             >
-              Formal
+              Formal Attire
             </h3>
 
-            <p className="text-base leading-7 text-[#4d5f78]">
-              Formal attire is requested. Guests are also welcome to wear{" "}
-              <span className="font-bold text-[#243b5a]">
-                gele or fascinators
-              </span>{" "}
-              for an elegant celebratory touch.
-            </p>
+            <div className="space-y-4 text-base leading-7 text-[#4d5f78]">
+              <p>
+                We kindly invite our guests to join us in celebrating this
+                special day dressed in elegant formal attire.
+              </p>
+
+              <p>
+                <span className="font-black text-[#243b5a]">Ladies:</span>{" "}
+                Help us celebrate in style! We would love for our female guests
+                to wear a beautiful{" "}
+                <span className="font-bold text-[#243b5a]">gele</span> or a
+                fabulous{" "}
+                <span className="font-bold text-[#243b5a]">fascinator</span>,
+                adding a graceful and celebratory touch to the occasion.
+              </p>
+
+              <p>
+                <span className="font-black text-[#243b5a]">Gentlemen:</span>{" "}
+                Black Tie Optional or Traditional Attire.
+              </p>
+            </div>
           </div>
         </motion.div>
       </div>
@@ -816,7 +733,7 @@ function LocationMapsSection() {
       className="mx-auto mt-24 flex w-full max-w-5xl flex-col items-center text-center sm:mt-32"
     >
       <p className="mb-3 text-xs uppercase tracking-[0.42em] text-[#9c8261]">
-        Locations
+        
       </p>
 
       <motion.h2
@@ -940,7 +857,7 @@ function LocationMapsSection() {
 
 function OrderOfDaySection() {
   const events = [
-    ["11:00 AM", "Church Ceremony"],
+    ["11:00", "Church Ceremony"],
     ["14:00", "Cocktail Hour & Photography"],
     ["15:00", "Reception"],
     ["19:00", "End of Reception"],
@@ -955,7 +872,7 @@ function OrderOfDaySection() {
           transition={{ duration: 0.55 }}
           className="mb-2 text-xs uppercase tracking-[0.42em] text-[#9c8261]"
         >
-          The Day
+          
         </motion.p>
 
         <motion.h2
@@ -1150,7 +1067,7 @@ function RegistryModal({
   onClose: () => void;
 }) {
   return (
-    <ModalShell open={open} onClose={onClose} maxWidth="max-w-2xl">
+    <ModalShell open={open} onClose={onClose} maxWidth="max-w-3xl">
       <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1163,39 +1080,43 @@ function RegistryModal({
         <h2
           className={`${playfair.className} mb-4 text-3xl font-black text-[#243b5a] sm:text-5xl`}
         >
-          Your presence is the gift
+          Your Presence Is Our Greatest Gift
         </h2>
 
-        <p className="mx-auto mb-5 max-w-xl text-sm leading-6 text-[#4d5f78] sm:mb-7 sm:text-base sm:leading-7">
-          We are so grateful to celebrate this special day with you. If you would
-          like to bless us with a gift, we would kindly prefer a financial
-          contribution toward our new life together rather than physical gifts.
-          Your love, support, and prayers mean the world to us.
+        <p className="mx-auto mb-8 max-w-2xl text-sm leading-7 text-[#4d5f78] sm:text-base">
+          Celebrating this special day with the people we love is more than we
+          could ever ask for. Should you wish to bless us with a gift, we would
+          be deeply grateful for a contribution towards our future together.
+          Your generosity, prayers, and support mean the world to us as we begin
+          this new chapter as husband and wife.
         </p>
 
-        <div className="grid gap-3 text-left sm:grid-cols-2">
-          <div className="rounded-[1.4rem] border border-[#c9a76b]/35 bg-[#fff8ed]/80 p-4 shadow-[0_14px_42px_rgba(36,59,90,0.08)]">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-[1.6rem] border border-[#c9a76b]/35 bg-[#fff8ed]/80 p-5 shadow-[0_14px_42px_rgba(36,59,90,0.08)]">
             <h3
-              className={`${playfair.className} mb-3 text-xl font-black text-[#243b5a]`}
+              className={`${playfair.className} mb-4 text-2xl font-black text-[#243b5a]`}
             >
-              TymeBank
+              TymeBank / GoTyme
             </h3>
 
-            <div className="space-y-1.5 text-sm text-[#4d5f78]">
+            <div className="space-y-2 text-sm text-[#4d5f78]">
               <p>
                 <span className="font-bold text-[#243b5a]">
                   Account Holder:
                 </span>{" "}
                 Funso Joseph Idowu
               </p>
+
               <p>
                 <span className="font-bold text-[#243b5a]">Bank Name:</span>{" "}
-                TymeBank
+                TymeBank / GoTyme
               </p>
+
               <p>
                 <span className="font-bold text-[#243b5a]">Branch Code:</span>{" "}
                 678910
               </p>
+
               <p>
                 <span className="font-bold text-[#243b5a]">
                   Account Number:
@@ -1205,24 +1126,38 @@ function RegistryModal({
             </div>
           </div>
 
-          <div className="rounded-[1.4rem] border border-[#c9a76b]/35 bg-[#fff8ed]/80 p-4 shadow-[0_14px_42px_rgba(36,59,90,0.08)]">
+          <div className="rounded-[1.6rem] border border-[#c9a76b]/35 bg-[#fff8ed]/80 p-5 shadow-[0_14px_42px_rgba(36,59,90,0.08)]">
             <h3
-              className={`${playfair.className} mb-3 text-xl font-black text-[#243b5a]`}
+              className={`${playfair.className} mb-4 text-2xl font-black text-[#243b5a]`}
             >
               Capitec
             </h3>
 
-            <div className="space-y-1.5 text-sm text-[#4d5f78]">
+            <div className="space-y-2 text-sm text-[#4d5f78]">
+              <p>
+                <span className="font-bold text-[#243b5a]">
+                  Account Holder:
+                </span>{" "}
+                Funso Joseph Idowu
+              </p>
+
+              <p>
+                <span className="font-bold text-[#243b5a]">Bank Name:</span>{" "}
+                Capitec Bank
+              </p>
+
               <p>
                 <span className="font-bold text-[#243b5a]">
                   Account Number:
                 </span>{" "}
                 2529873840
               </p>
+
               <p>
                 <span className="font-bold text-[#243b5a]">Branch Code:</span>{" "}
                 470010
               </p>
+
               <p>
                 <span className="font-bold text-[#243b5a]">Swift Code:</span>{" "}
                 CABLZAJJ
@@ -1231,16 +1166,49 @@ function RegistryModal({
           </div>
         </div>
 
-        <div className="mx-auto mt-4 max-w-md rounded-full border border-[#c9a76b]/45 bg-[#fff8ed]/90 px-5 py-3 text-center shadow-[0_14px_42px_rgba(36,59,90,0.08)]">
+        <div className="mt-4 rounded-[1.6rem] border border-[#c9a76b]/35 bg-[#fff8ed]/80 p-5 shadow-[0_14px_42px_rgba(36,59,90,0.08)]">
+          <h3
+            className={`${playfair.className} mb-4 text-2xl font-black text-[#243b5a]`}
+          >
+            PayPal
+          </h3>
+
+          <p className="mx-auto mb-4 max-w-xl text-sm leading-6 text-[#4d5f78]">
+            For guests celebrating with us from abroad, PayPal may be the most
+            convenient way to send a gift. Contributions can be made using
+            either the email address or mobile number below.
+          </p>
+
+          <div className="space-y-2 text-sm text-[#4d5f78]">
+            <p>
+              <span className="font-bold text-[#243b5a]">PayPal Email:</span>{" "}
+              joseph.f.idowu@gmail.com
+            </p>
+
+            <p>
+              <span className="font-bold text-[#243b5a]">PayPal Mobile:</span>{" "}
+              +27 74 084 1686
+            </p>
+          </div>
+        </div>
+
+        <div className="mx-auto mt-5 max-w-md rounded-full border border-[#c9a76b]/45 bg-[#fff8ed]/90 px-5 py-3 text-center shadow-[0_14px_42px_rgba(36,59,90,0.08)]">
           <p className="text-xs uppercase tracking-[0.28em] text-[#9c8261]">
             PayShap
           </p>
+
           <p
             className={`${playfair.className} text-xl font-black text-[#243b5a]`}
           >
             0740841686
           </p>
         </div>
+
+        <p className="mx-auto mt-8 max-w-xl text-center text-sm italic text-[#6f7f96]">
+          Thank you for celebrating with us and for being part of our story.
+          Your love, support, and well wishes are the greatest gifts we could
+          receive.
+        </p>
       </motion.div>
     </ModalShell>
   );
@@ -1250,158 +1218,182 @@ function RSVPModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [step, setStep] = useState<RSVPStep>("surname");
   const [surname, setSurname] = useState("");
   const [submittedSurname, setSubmittedSurname] = useState("");
+  const [family, setFamily] = useState<RSVPFamily | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
-  const [churchAttending, setChurchAttending] = useState(false);
-  const [churchCount, setChurchCount] = useState(0);
-  const [churchSeatsAvailable, setChurchSeatsAvailable] =
-    useState(TOTAL_CHURCH_SEATS);
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const surnameKey = useMemo(
-    () => normalizeSurname(submittedSurname || surname),
-    [submittedSurname, surname]
-  );
-
-  const weddingGuestCount = familyMembers.filter(
-    (member) => member.checked
+  const attendingWeddingCount = familyMembers.filter(
+    (member) => member.attendingWedding
   ).length;
 
-  const existingChurchReservation =
-    surnameKey && typeof window !== "undefined"
-      ? getChurchReservations()[surnameKey] ?? 0
-      : 0;
+  const attendingChurchCount = familyMembers.filter(
+    (member) => member.attendingChurch
+  ).length;
 
-  const seatsAvailableForThisFamily =
-    churchSeatsAvailable + existingChurchReservation;
+  const familyChurchLimit = family?.churchSeatLimit ?? 0;
 
-  const maxChurchForThisFamily = Math.min(
-    familyMembers.length,
-    seatsAvailableForThisFamily
-  );
-
-  useEffect(() => {
-    if (open) {
-      setChurchSeatsAvailable(getChurchSeatsAvailable());
-    }
-  }, [open]);
+  function resetModal() {
+    setStep("surname");
+    setSurname("");
+    setSubmittedSurname("");
+    setFamily(null);
+    setFamilyMembers([]);
+    setContactEmail("");
+    setContactPhone("");
+    setErrorMessage("");
+  }
 
   useEffect(() => {
     if (!open) {
-      setTimeout(() => {
-        setStep("surname");
-        setSurname("");
-        setSubmittedSurname("");
-        setFamilyMembers([]);
-        setChurchAttending(false);
-        setChurchCount(0);
+      const timer = window.setTimeout(() => {
+        resetModal();
       }, 250);
+
+      return () => window.clearTimeout(timer);
     }
   }, [open]);
 
-  function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
+  event.preventDefault();
 
-    const cleanSurname = surname.trim();
+  const cleanSurname = surname.trim();
 
-    if (!cleanSurname) return;
+  if (!cleanSurname) return;
 
-    setSubmittedSurname(cleanSurname);
-    setStep("loading");
+  setSubmittedSurname(cleanSurname);
+  setErrorMessage("");
+  setStep("loading");
 
-    window.setTimeout(() => {
-      const key = getFamilyStorageKey(cleanSurname);
-      const stored = window.localStorage.getItem(key);
+  try {
+    const [response] = await Promise.all([
+      fetch("/api/rsvp/family", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ surname: cleanSurname }),
+      }),
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]);
 
-      if (stored) {
-        const parsed: RSVPRecord | FamilyMember[] = JSON.parse(stored);
+    const data = await response.json();
 
-        if (Array.isArray(parsed)) {
-          setFamilyMembers(parsed);
-          setChurchAttending(false);
-          setChurchCount(0);
-        } else {
-          setFamilyMembers(parsed.familyMembers);
-          setChurchAttending(parsed.churchAttending);
-          setChurchCount(parsed.churchCount);
-        }
-      } else {
-        const generated = generateFamilyMembers(cleanSurname);
-        setFamilyMembers(generated);
-        setChurchAttending(false);
-        setChurchCount(0);
-
-        const initialRecord: RSVPRecord = {
-          familyMembers: generated,
-          churchAttending: false,
-          churchCount: 0,
-        };
-
-        window.localStorage.setItem(key, JSON.stringify(initialRecord));
-      }
-
-      setChurchSeatsAvailable(getChurchSeatsAvailable());
-      setStep("family");
-    }, 850);
-  }
-
-  function toggleMember(index: number) {
-    setFamilyMembers((current) =>
-      current.map((member, memberIndex) =>
-        memberIndex === index ? { ...member, checked: !member.checked } : member
-      )
-    );
-  }
-
-  function handleChurchCountChange(value: string) {
-    const numericValue = Number(value);
-
-    if (Number.isNaN(numericValue)) {
-      setChurchCount(0);
+    if (!response.ok) {
+      setErrorMessage(
+        data.error ?? "Family not found. Please check the surname."
+      );
+      setStep("surname");
       return;
     }
 
-    const nextValue = Math.max(
-      0,
-      Math.min(numericValue, maxChurchForThisFamily)
+    setFamily(data.family);
+    setContactEmail(data.family.contactEmail ?? "");
+    setContactPhone(data.family.contactPhone ?? "");
+
+    setFamilyMembers(
+      data.members.map((member: any) => ({
+        id: member.id,
+        fullName: member.fullName,
+        attendingWedding: Boolean(member.attendingWedding),
+        attendingChurch: Boolean(member.attendingChurch),
+        churchEligible: member.churchEligible !== false,
+      }))
     );
-    setChurchCount(nextValue);
 
-    if (nextValue > 0) {
-      setChurchAttending(true);
-    }
+    setStep("family");
+  } catch (error) {
+    console.error(error);
+    setErrorMessage("Could not load your family. Please try again.");
+    setStep("surname");
+  }
+}
+
+  function toggleWeddingAttendance(memberId: string) {
+    setFamilyMembers((current) =>
+      current.map((member) => {
+        if (member.id !== memberId) return member;
+
+        const nextAttendingWedding = !member.attendingWedding;
+
+        return {
+          ...member,
+          attendingWedding: nextAttendingWedding,
+          attendingChurch: nextAttendingWedding ? member.attendingChurch : false,
+        };
+      })
+    );
   }
 
-  function handleChurchToggle(value: boolean) {
-    setChurchAttending(value);
+  function toggleChurchAttendance(memberId: string) {
+    setFamilyMembers((current) => {
+      const currentChurchCount = current.filter(
+        (member) => member.attendingChurch
+      ).length;
 
-    if (!value) {
-      setChurchCount(0);
-    } else if (churchCount === 0) {
-      setChurchCount(Math.min(1, maxChurchForThisFamily));
-    }
+      return current.map((member) => {
+        if (member.id !== memberId) return member;
+
+        if (!member.churchEligible || !member.attendingWedding) return member;
+
+        if (!member.attendingChurch && currentChurchCount >= familyChurchLimit) {
+          setErrorMessage(
+            `This family has a church ceremony limit of ${familyChurchLimit} seat${
+              familyChurchLimit === 1 ? "" : "s"
+            }.`
+          );
+          return member;
+        }
+
+        setErrorMessage("");
+
+        return {
+          ...member,
+          attendingChurch: !member.attendingChurch,
+        };
+      });
+    });
   }
 
-  function handleFamilySubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleFamilySubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const finalChurchCount = churchAttending
-      ? Math.min(churchCount, maxChurchForThisFamily)
-      : 0;
+    if (!family) {
+      setErrorMessage("Family details are missing. Please search again.");
+      return;
+    }
 
-    const record: RSVPRecord = {
-      familyMembers,
-      churchAttending,
-      churchCount: finalChurchCount,
-    };
+    setErrorMessage("");
 
-    window.localStorage.setItem(
-      getFamilyStorageKey(submittedSurname),
-      JSON.stringify(record)
-    );
+    try {
+      const response = await fetch("/api/rsvp/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          familyId: family.id,
+          contactEmail,
+          contactPhone,
+          members: familyMembers,
+        }),
+      });
 
-    saveChurchReservation(surnameKey, finalChurchCount);
-    setChurchSeatsAvailable(getChurchSeatsAvailable());
-    setChurchCount(finalChurchCount);
-    setStep("success");
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrorMessage(
+          data.error ?? "Could not submit RSVP. Please try again."
+        );
+        return;
+      }
+
+      setStep("success");
+    } catch (error) {
+      console.error(error);
+      setErrorMessage("Could not submit RSVP. Please try again.");
+    }
   }
 
   return (
@@ -1427,15 +1419,21 @@ function RSVPModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             </h2>
 
             <p className="mx-auto mb-5 max-w-sm text-sm leading-6 text-[#4d5f78] sm:mb-8 sm:text-base sm:leading-7">
-              Please enter your family surname so we can find your party.
+              Please enter your family surname so we can find your invitation.
             </p>
 
             <input
               value={surname}
               onChange={(event) => setSurname(event.target.value)}
               placeholder="Enter surname"
-              className={`${playfair.className} mb-5 w-full rounded-full border border-[#c9a76b]/45 bg-[#fff8ed] px-5 py-3.5 text-center text-lg font-bold text-[#243b5a] outline-none shadow-inner placeholder:text-[#9c8261]/55 focus:border-[#b88a3d] sm:mb-6 sm:px-6 sm:py-4 sm:text-xl`}
+              className={`${playfair.className} mb-4 w-full rounded-full border border-[#c9a76b]/45 bg-[#fff8ed] px-5 py-3.5 text-center text-lg font-bold text-[#243b5a] outline-none shadow-inner placeholder:text-[#9c8261]/55 focus:border-[#b88a3d] sm:px-6 sm:py-4 sm:text-xl`}
             />
+
+            {errorMessage && (
+              <p className="mx-auto mb-4 max-w-sm text-sm font-bold text-[#b91c1c]">
+                {errorMessage}
+              </p>
+            )}
 
             <motion.button
               type="submit"
@@ -1443,7 +1441,7 @@ function RSVPModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               whileTap={{ scale: 0.98 }}
               className={`${playfair.className} rounded-full border-2 border-[#c9a76b] bg-[#243b5a] px-9 py-3.5 text-xs font-black uppercase tracking-[0.28em] text-[#fff8ed] shadow-[0_22px_70px_rgba(36,59,90,0.22)] sm:px-10 sm:py-4 sm:text-sm sm:tracking-[0.32em]`}
             >
-              Submit
+              Find Invitation
             </motion.button>
           </motion.form>
         )}
@@ -1460,7 +1458,7 @@ function RSVPModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             <h2
               className={`${playfair.className} mb-8 text-2xl font-black text-[#243b5a] sm:text-4xl`}
             >
-              Fetching family names...
+              Finding your invitation...
             </h2>
 
             <div className="mx-auto h-3 max-w-sm overflow-hidden rounded-full bg-[#d8c3a5]/35">
@@ -1468,13 +1466,13 @@ function RSVPModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                 className="h-full rounded-full bg-gradient-to-r from-[#b88a3d] via-[#e2c27d] to-[#b88a3d]"
                 initial={{ width: "0%" }}
                 animate={{ width: "100%" }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
+                transition={{ duration: 3, ease: "easeInOut" }}
               />
             </div>
           </motion.div>
         )}
 
-        {step === "family" && (
+        {step === "family" && family && (
           <motion.form
             key="family"
             onSubmit={handleFamilySubmit}
@@ -1484,105 +1482,120 @@ function RSVPModal({ open, onClose }: { open: boolean; onClose: () => void }) {
             transition={{ duration: 0.35 }}
           >
             <p className="mb-2 text-[0.62rem] uppercase tracking-[0.32em] text-[#9c8261] sm:mb-3 sm:text-xs sm:tracking-[0.42em]">
-              {titleCase(submittedSurname)} Family
+              {family.surname} Family
             </p>
 
             <h2
               className={`${playfair.className} mb-4 text-2xl font-black text-[#243b5a] sm:mb-5 sm:text-4xl`}
             >
-              Who will be attending?
+              Please confirm attendance
             </h2>
 
-            <div className="mb-4 grid grid-cols-1 gap-2 text-left sm:mb-5 sm:gap-3">
-              {familyMembers.map((member, index) => (
-                <label
-                  key={member.name}
-                  className="flex cursor-pointer items-center gap-3 rounded-2xl border border-[#c9a76b]/30 bg-[#fff8ed]/70 px-4 py-2.5 shadow-[0_12px_40px_rgba(36,59,90,0.08)] transition hover:border-[#c9a76b]/70 sm:gap-4 sm:px-5 sm:py-3"
-                >
-                  <input
-                    type="checkbox"
-                    checked={member.checked}
-                    onChange={() => toggleMember(index)}
-                    className="h-4 w-4 accent-[#b88a3d] sm:h-5 sm:w-5"
-                  />
+            <div className="mb-4 rounded-[1.4rem] border border-[#c9a76b]/35 bg-[#fff8ed]/75 p-4 text-left shadow-[0_16px_50px_rgba(36,59,90,0.08)]">
+              <p className="mb-3 text-xs uppercase tracking-[0.24em] text-[#9c8261]">
+                Contact details for updates
+              </p>
 
-                  <span
-                    className={`${playfair.className} text-base font-bold text-[#243b5a] sm:text-lg`}
+              <input
+                type="email"
+                value={contactEmail}
+                onChange={(event) => setContactEmail(event.target.value)}
+                placeholder="Email address"
+                className={`${playfair.className} mb-3 w-full rounded-full border border-[#c9a76b]/45 bg-[#fff8ed] px-5 py-3 text-center text-base font-bold text-[#243b5a] outline-none placeholder:text-[#9c8261]/55`}
+              />
+
+              <input
+                type="tel"
+                value={contactPhone}
+                onChange={(event) => setContactPhone(event.target.value)}
+                placeholder="Phone number"
+                className={`${playfair.className} w-full rounded-full border border-[#c9a76b]/45 bg-[#fff8ed] px-5 py-3 text-center text-base font-bold text-[#243b5a] outline-none placeholder:text-[#9c8261]/55`}
+              />
+            </div>
+
+            <div className="mb-4 space-y-3 text-left">
+              {familyMembers.map((member) => (
+                <div
+                  key={member.id}
+                  className="rounded-2xl border border-[#c9a76b]/30 bg-[#fff8ed]/75 px-4 py-3 shadow-[0_12px_40px_rgba(36,59,90,0.08)]"
+                >
+                  <p
+                    className={`${playfair.className} mb-3 text-lg font-black text-[#243b5a]`}
                   >
-                    {member.name}
-                  </span>
-                </label>
+                    {member.fullName}
+                  </p>
+
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <label className="flex cursor-pointer items-center gap-3 rounded-full border border-[#c9a76b]/35 bg-[#f8efe2]/80 px-4 py-2.5">
+                      <input
+                        type="checkbox"
+                        checked={member.attendingWedding}
+                        onChange={() => toggleWeddingAttendance(member.id)}
+                        className="h-4 w-4 accent-[#b88a3d]"
+                      />
+
+                      <span className="text-sm font-bold text-[#4d5f78]">
+                        Reception
+                      </span>
+                    </label>
+
+                    <label
+                      className={`flex items-center gap-3 rounded-full border px-4 py-2.5 ${
+                        member.churchEligible && member.attendingWedding
+                          ? "cursor-pointer border-[#c9a76b]/35 bg-[#f8efe2]/80"
+                          : "cursor-not-allowed border-[#c9a76b]/20 bg-[#f8efe2]/35 opacity-45"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={member.attendingChurch}
+                        disabled={
+                          !member.churchEligible || !member.attendingWedding
+                        }
+                        onChange={() => toggleChurchAttendance(member.id)}
+                        className="h-4 w-4 accent-[#b88a3d]"
+                      />
+
+                      <span className="text-sm font-bold text-[#4d5f78]">
+                        Church Ceremony
+                      </span>
+                    </label>
+                  </div>
+                </div>
               ))}
             </div>
 
-            <div className="mb-5 rounded-[1.4rem] border border-[#c9a76b]/40 bg-[#fff8ed]/75 p-4 text-left shadow-[0_16px_50px_rgba(36,59,90,0.08)] sm:rounded-[1.6rem] sm:p-5">
-              <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p
-                    className={`${playfair.className} text-lg font-black text-[#243b5a] sm:text-xl`}
-                  >
-                    Church ceremony
-                  </p>
-                  <p className="text-xs leading-5 text-[#4d5f78] sm:text-sm sm:leading-6">
-                    Will your family attend the morning church ceremony?
-                  </p>
-                </div>
+            <div className="mb-5 rounded-[1.4rem] border border-[#c9a76b]/40 bg-[#fff8ed]/75 p-4 text-center shadow-[0_16px_50px_rgba(36,59,90,0.08)]">
+              <p className="text-xs uppercase tracking-[0.22em] text-[#9c8261]">
+                RSVP Summary
+              </p>
 
-                <div className="rounded-full border border-[#c9a76b]/40 bg-[#f8efe2] px-3 py-1.5 text-center text-[0.62rem] font-black uppercase tracking-[0.16em] text-[#a77b34] sm:px-4 sm:py-2 sm:text-xs sm:tracking-[0.2em]">
-                  {churchSeatsAvailable} seats left
-                </div>
-              </div>
-
-              <div className="mb-4 grid grid-cols-2 gap-2 sm:mb-5 sm:gap-3">
-                <button
-                  type="button"
-                  onClick={() => handleChurchToggle(true)}
-                  className={`${playfair.className} rounded-full border px-4 py-2.5 text-xs font-black uppercase tracking-[0.18em] transition sm:px-5 sm:py-3 sm:text-sm sm:tracking-[0.22em] ${
-                    churchAttending
-                      ? "border-[#b88a3d] bg-[#243b5a] text-[#fff8ed]"
-                      : "border-[#c9a76b]/40 bg-[#fff8ed] text-[#9c8261]"
-                  }`}
-                >
-                  Yes
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleChurchToggle(false)}
-                  className={`${playfair.className} rounded-full border px-4 py-2.5 text-xs font-black uppercase tracking-[0.18em] transition sm:px-5 sm:py-3 sm:text-sm sm:tracking-[0.22em] ${
-                    !churchAttending
-                      ? "border-[#b88a3d] bg-[#243b5a] text-[#fff8ed]"
-                      : "border-[#c9a76b]/40 bg-[#fff8ed] text-[#9c8261]"
-                  }`}
-                >
-                  No
-                </button>
-              </div>
-
-              <label className="block">
-                <span className="mb-2 block text-xs font-bold text-[#4d5f78] sm:text-sm">
-                  How many family members will attend the church ceremony?
+              <p className="mt-2 text-sm leading-6 text-[#4d5f78]">
+                Reception attendees:{" "}
+                <span className="font-black text-[#243b5a]">
+                  {attendingWeddingCount}
                 </span>
+              </p>
 
-                <input
-                  type="number"
-                  min={0}
-                  max={maxChurchForThisFamily}
-                  disabled={!churchAttending}
-                  value={churchCount}
-                  onChange={(event) =>
-                    handleChurchCountChange(event.target.value)
-                  }
-                  className={`${playfair.className} w-full rounded-full border border-[#c9a76b]/45 bg-[#fff8ed] px-5 py-3 text-center text-lg font-black text-[#243b5a] outline-none disabled:cursor-not-allowed disabled:opacity-45 sm:px-6 sm:py-4 sm:text-xl`}
-                />
-              </label>
+              <p className="text-sm leading-6 text-[#4d5f78]">
+                Church attendees:{" "}
+                <span className="font-black text-[#243b5a]">
+                  {attendingChurchCount}
+                </span>{" "}
+                / {familyChurchLimit}
+              </p>
 
-              <p className="mt-2 text-center text-[0.68rem] leading-4 text-[#6f7f96] sm:mt-3 sm:text-xs sm:leading-5">
-                Family limit: {familyMembers.length}. Wedding attendees
-                selected: {weddingGuestCount}. Church seats available to this
-                family: {maxChurchForThisFamily}.
+              <p className="mt-2 text-[0.68rem] leading-5 text-[#6f7f96]">
+                Church seats are limited and are allocated according to your
+                invitation group.
               </p>
             </div>
+
+            {errorMessage && (
+              <p className="mx-auto mb-4 max-w-sm text-sm font-bold text-[#b91c1c]">
+                {errorMessage}
+              </p>
+            )}
 
             <motion.button
               type="submit"
@@ -1619,10 +1632,8 @@ function RSVPModal({ open, onClose }: { open: boolean; onClose: () => void }) {
               RSVP submitted
             </h2>
 
-            <p className="text-lg text-[#4d5f78] sm:text-xl">See you soon!</p>
-
-            <p className="mt-5 text-sm text-[#6f7f96]">
-              Church seats remaining: {churchSeatsAvailable}
+            <p className="text-lg text-[#4d5f78] sm:text-xl">
+              Thank you. We cannot wait to celebrate with you.
             </p>
           </motion.div>
         )}
