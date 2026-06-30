@@ -13,12 +13,13 @@ type SubmittedMember = {
   id: string;
   attendingWedding?: boolean;
   attendingChurch?: boolean;
+  contactEmail?: string;
+  contactPhone?: string;
 };
 
 export async function POST(request: Request) {
   try {
-    const { familyId, contactEmail, contactPhone, members } =
-      await request.json();
+    const { familyId, members } = await request.json();
 
     if (!familyId || !Array.isArray(members)) {
       return NextResponse.json(
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
     const familyData = familyDoc.data();
 
     const guestGroup = (familyData?.guestGroup ?? "bride-groom") as GuestGroup;
+
     const existingMembersSnapshot = await familyRef.collection("members").get();
     const familyChurchLimit = existingMembersSnapshot.size;
     const previousFamilyChurchSeats = Number(familyData?.churchSeatsUsed ?? 0);
@@ -73,14 +75,20 @@ export async function POST(request: Request) {
     );
 
     const adjustedGroupChurchSeats =
-      currentGroupChurchSeats - previousFamilyChurchSeats + newFamilyChurchSeats;
+      currentGroupChurchSeats -
+      previousFamilyChurchSeats +
+      newFamilyChurchSeats;
 
     const groupLimit = GROUP_LIMITS[guestGroup];
 
     if (adjustedGroupChurchSeats > groupLimit) {
       return NextResponse.json(
         {
-          error: `Church ceremony seats for this invitation group are full. ${guestGroup === "parents" ? "Parents' guests" : "Bride and groom guests"} have a limit of ${groupLimit} seats.`,
+          error: `Church ceremony seats for this invitation group are full. ${
+            guestGroup === "parents"
+              ? "Parents' guests"
+              : "Bride and groom guests"
+          } have a limit of ${groupLimit} seats.`,
         },
         { status: 400 }
       );
@@ -89,8 +97,6 @@ export async function POST(request: Request) {
     const batch = adminDb.batch();
 
     batch.update(familyRef, {
-      contactEmail: contactEmail ?? "",
-      contactPhone: contactPhone ?? "",
       churchSeatsUsed: newFamilyChurchSeats,
       rsvpStatus: "submitted",
       submittedAt: FieldValue.serverTimestamp(),
@@ -102,6 +108,8 @@ export async function POST(request: Request) {
       batch.update(memberRef, {
         attendingWedding: Boolean(member.attendingWedding),
         attendingChurch: Boolean(member.attendingChurch),
+        contactEmail: member.contactEmail ?? "",
+        contactPhone: member.contactPhone ?? "",
         rsvpStatus: "submitted",
         submittedAt: FieldValue.serverTimestamp(),
       });

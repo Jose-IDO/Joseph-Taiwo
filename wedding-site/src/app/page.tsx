@@ -37,19 +37,23 @@ const playfair = Playfair_Display({
 const WEDDING_DATE = new Date("2026-12-12T11:00:00+02:00").getTime();
 const RSVP_DEADLINE = "30 September 2026";
 
+type GuestGroup = "bride-groom" | "parents";
+
 type FamilyMember = {
   id: string;
   fullName: string;
   attendingWedding: boolean;
   attendingChurch: boolean;
   churchEligible: boolean;
+  contactEmail: string;
+  contactPhone: string;
 };
 
 type RSVPFamily = {
   id: string;
   surname: string;
   familyNameKey: string;
-  guestGroup: "bride-groom" | "parents";
+  guestGroup: GuestGroup;
   churchSeatLimit: number;
   churchSeatsUsed: number;
   contactEmail?: string;
@@ -1005,6 +1009,13 @@ function OrderOfDaySection() {
             We love and adore your little ones, but we kindly ask that this
             remains an adults-only celebration.
           </p>
+
+          <div className="mx-auto my-5 h-px w-44 bg-gradient-to-r from-transparent via-[#c9a76b] to-transparent" />
+
+          <p className="text-sm font-bold leading-6 text-[#4d5f78]">
+            All wedding communication will be sent and shared via email, SMS,
+            and WhatsApp.
+          </p>
         </motion.div>
       </div>
     </RootsWrap>
@@ -1651,10 +1662,10 @@ function RSVPModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [step, setStep] = useState<RSVPStep>("surname");
   const [surname, setSurname] = useState("");
   const [submittedSurname, setSubmittedSurname] = useState("");
+  const [selectedGuestGroup, setSelectedGuestGroup] =
+    useState<GuestGroup>("bride-groom");
   const [family, setFamily] = useState<RSVPFamily | null>(null);
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
-  const [contactEmail, setContactEmail] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   const attendingWeddingCount = familyMembers.filter(
@@ -1673,8 +1684,6 @@ function RSVPModal({ open, onClose }: { open: boolean; onClose: () => void }) {
     setSubmittedSurname("");
     setFamily(null);
     setFamilyMembers([]);
-    setContactEmail("");
-    setContactPhone("");
     setErrorMessage("");
   }
 
@@ -1706,7 +1715,10 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ surname: cleanSurname }),
+        body: JSON.stringify({
+          surname: cleanSurname,
+          guestGroup: selectedGuestGroup,
+        }),
       }),
       new Promise((resolve) => setTimeout(resolve, 3000)),
     ]);
@@ -1722,8 +1734,6 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
     }
 
     setFamily(data.family);
-    setContactEmail(data.family.contactEmail ?? "");
-    setContactPhone(data.family.contactPhone ?? "");
 
     setFamilyMembers(
       data.members.map((member: any) => ({
@@ -1732,6 +1742,8 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
         attendingWedding: Boolean(member.attendingWedding),
         attendingChurch: Boolean(member.attendingChurch),
         churchEligible: member.churchEligible !== false,
+        contactEmail: member.contactEmail ?? "",
+        contactPhone: member.contactPhone ?? "",
       }))
     );
 
@@ -1742,6 +1754,18 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
     setStep("surname");
   }
 }
+
+  function updateMemberContact(
+    memberId: string,
+    field: "contactEmail" | "contactPhone",
+    value: string
+  ) {
+    setFamilyMembers((current) =>
+      current.map((member) =>
+        member.id === memberId ? { ...member, [field]: value } : member
+      )
+    );
+  }
 
   function toggleWeddingAttendance(memberId: string) {
     setFamilyMembers((current) =>
@@ -1807,8 +1831,6 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
         },
         body: JSON.stringify({
           familyId: family.id,
-          contactEmail,
-          contactPhone,
           members: familyMembers,
         }),
       });
@@ -1854,6 +1876,26 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
             <p className="mx-auto mb-5 max-w-sm text-sm leading-6 text-[#4d5f78] sm:mb-8 sm:text-base sm:leading-7">
               Please enter your family surname so we can find your invitation.
             </p>
+
+            <div className="mx-auto mb-5 grid max-w-md grid-cols-2 gap-2 rounded-[1.4rem] border border-[#c9a76b]/35 bg-[#fff8ed]/70 p-2 shadow-[0_14px_42px_rgba(36,59,90,0.08)]">
+              {[
+                { value: "bride-groom" as const, label: "Bride & Groom" },
+                { value: "parents" as const, label: "Parents" },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setSelectedGuestGroup(option.value)}
+                  className={`${playfair.className} rounded-full px-3 py-2.5 text-[0.62rem] font-black uppercase tracking-[0.18em] transition sm:text-xs ${
+                    selectedGuestGroup === option.value
+                      ? "bg-[#243b5a] text-[#fff8ed] shadow-[0_14px_34px_rgba(36,59,90,0.18)]"
+                      : "bg-[#f8efe2]/70 text-[#9c8261] hover:bg-[#fff8ed]"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
 
             <input
               value={surname}
@@ -1924,26 +1966,15 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
               Please confirm attendance
             </h2>
 
-            <div className="mb-4 rounded-[1.4rem] border border-[#c9a76b]/35 bg-[#fff8ed]/75 p-4 text-left shadow-[0_16px_50px_rgba(36,59,90,0.08)]">
-              <p className="mb-3 text-xs uppercase tracking-[0.24em] text-[#9c8261]">
-                Contact details for updates
+            <div className="mb-4 rounded-[1.4rem] border border-[#c9a76b]/35 bg-[#fff8ed]/75 p-4 text-center shadow-[0_16px_50px_rgba(36,59,90,0.08)]">
+              <p className="text-xs uppercase tracking-[0.24em] text-[#9c8261]">
+                Contact details
               </p>
 
-              <input
-                type="email"
-                value={contactEmail}
-                onChange={(event) => setContactEmail(event.target.value)}
-                placeholder="Email address"
-                className={`${playfair.className} mb-3 w-full rounded-full border border-[#c9a76b]/45 bg-[#fff8ed] px-5 py-3 text-center text-base font-bold text-[#243b5a] outline-none placeholder:text-[#9c8261]/55`}
-              />
-
-              <input
-                type="tel"
-                value={contactPhone}
-                onChange={(event) => setContactPhone(event.target.value)}
-                placeholder="Phone number"
-                className={`${playfair.className} w-full rounded-full border border-[#c9a76b]/45 bg-[#fff8ed] px-5 py-3 text-center text-base font-bold text-[#243b5a] outline-none placeholder:text-[#9c8261]/55`}
-              />
+              <p className="mt-2 text-sm leading-6 text-[#4d5f78]">
+                Please add an email address and cellphone number for each invited
+                guest so we can send wedding updates directly to everyone.
+              </p>
             </div>
 
             <div className="mb-4 space-y-3 text-left">
@@ -1957,6 +1988,36 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
                   >
                     {member.fullName}
                   </p>
+
+                  <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <input
+                      type="email"
+                      value={member.contactEmail}
+                      onChange={(event) =>
+                        updateMemberContact(
+                          member.id,
+                          "contactEmail",
+                          event.target.value
+                        )
+                      }
+                      placeholder="Email address"
+                      className={`${playfair.className} w-full rounded-full border border-[#c9a76b]/40 bg-[#fff8ed] px-4 py-2.5 text-center text-sm font-bold text-[#243b5a] outline-none placeholder:text-[#9c8261]/50 focus:border-[#b88a3d]`}
+                    />
+
+                    <input
+                      type="tel"
+                      value={member.contactPhone}
+                      onChange={(event) =>
+                        updateMemberContact(
+                          member.id,
+                          "contactPhone",
+                          event.target.value
+                        )
+                      }
+                      placeholder="Cellphone number"
+                      className={`${playfair.className} w-full rounded-full border border-[#c9a76b]/40 bg-[#fff8ed] px-4 py-2.5 text-center text-sm font-bold text-[#243b5a] outline-none placeholder:text-[#9c8261]/50 focus:border-[#b88a3d]`}
+                    />
+                  </div>
 
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <label className="flex cursor-pointer items-center gap-3 rounded-full border border-[#c9a76b]/35 bg-[#f8efe2]/80 px-4 py-2.5">

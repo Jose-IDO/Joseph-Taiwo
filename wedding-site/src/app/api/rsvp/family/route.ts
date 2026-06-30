@@ -2,31 +2,43 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 
 function normalizeSurname(value: string) {
-  return value.trim().toLowerCase().replace(/\s+/g, "-");
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[()]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 export async function POST(request: Request) {
   try {
-    const { surname } = await request.json();
+    const { surname, guestGroup } = await request.json();
 
-    if (!surname) {
+    if (!surname || !guestGroup) {
       return NextResponse.json(
-        { error: "Surname is required" },
+        { error: "Surname and guest group are required" },
         { status: 400 }
       );
     }
 
-    const familyId = normalizeSurname(surname);
+    const familyNameKey = normalizeSurname(surname);
 
-    const familyRef = adminDb.collection("families").doc(familyId);
-    const familyDoc = await familyRef.get();
+    const familiesSnapshot = await adminDb
+      .collection("families")
+      .where("familyNameKey", "==", familyNameKey)
+      .where("guestGroup", "==", guestGroup)
+      .limit(1)
+      .get();
 
-    if (!familyDoc.exists) {
+    if (familiesSnapshot.empty) {
       return NextResponse.json(
         { error: "Family not found" },
         { status: 404 }
       );
     }
+
+    const familyDoc = familiesSnapshot.docs[0];
+    const familyRef = familyDoc.ref;
 
     const membersSnapshot = await familyRef.collection("members").get();
 
