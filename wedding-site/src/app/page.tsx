@@ -308,6 +308,52 @@ function TimeBlock({
   );
 }
 
+
+function ScrollDownArrow() {
+  return (
+    <motion.div
+      className="mt-7 flex flex-col items-center justify-center"
+      animate={{
+        y: [0, 12, 0],
+        opacity: [0.68, 1, 0.68],
+      }}
+      transition={{
+        duration: 2.1,
+        repeat: Infinity,
+        ease: "easeInOut",
+      }}
+    >
+      <motion.svg
+        width="44"
+        height="44"
+        viewBox="0 0 24 24"
+        fill="none"
+        className="text-[#b88a3d] drop-shadow-[0_0_18px_rgba(201,167,107,0.95)]"
+        animate={{
+          filter: [
+            "drop-shadow(0 0 8px rgba(201,167,107,0.45))",
+            "drop-shadow(0 0 20px rgba(201,167,107,0.95))",
+            "drop-shadow(0 0 8px rgba(201,167,107,0.45))",
+          ],
+        }}
+        transition={{
+          duration: 2.1,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      >
+        <path
+          d="M6 9.5 12 15.5 18 9.5"
+          stroke="currentColor"
+          strokeWidth="2.3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </motion.svg>
+    </motion.div>
+  );
+}
+
 function FloatingDust() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -858,10 +904,26 @@ function LocationMapsSection() {
 
 function OrderOfDaySection() {
   const events = [
-    ["11:00", "Church Ceremony"],
-    ["13:30", "Cocktail Hour & Photography"],
-    ["14:30", "Reception"],
-    ["19:00", "End of Reception"],
+    {
+      time: "11:00",
+      title: "Church Ceremony",
+      icon: "church" as const,
+    },
+    {
+      time: "13:30",
+      title: "Cocktail Hour & Photography",
+      icon: "cocktail-camera" as const,
+    },
+    {
+      time: "14:30",
+      title: "Reception",
+      icon: "dining" as const,
+    },
+    {
+      time: "19:00",
+      title: "End of Reception",
+      icon: "party" as const,
+    },
   ];
 
   return (
@@ -895,9 +957,9 @@ function OrderOfDaySection() {
           />
 
           <div className="space-y-6">
-            {events.map(([time, title], index) => (
+            {events.map((event, index) => (
               <motion.div
-                key={title}
+                key={event.title}
                 initial={{ opacity: 0, x: 32 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.55, delay: index * 0.1 }}
@@ -905,16 +967,20 @@ function OrderOfDaySection() {
               >
                 <span className="absolute -left-[3.65rem] top-1/2 hidden h-6 w-6 -translate-y-1/2 rounded-full border border-[#b88a3d] bg-[#d8c3a5] shadow-[0_0_0_6px_rgba(248,239,226,0.95)] sm:block" />
 
-                <p
-                  className={`${playfair.className} text-3xl font-black text-[#243b5a]`}
-                >
-                  {time}
-                </p>
+                <div className="flex items-center gap-4">
+                  <EventIcon type={event.icon} />
+
+                  <p
+                    className={`${playfair.className} text-3xl font-black text-[#243b5a]`}
+                  >
+                    {event.time}
+                  </p>
+                </div>
 
                 <div className="my-2 h-px w-40 bg-gradient-to-r from-[#b88a3d]/80 to-transparent" />
 
                 <p className="text-lg uppercase tracking-[0.16em] text-[#4d5f78]">
-                  {title}
+                  {event.title}
                 </p>
               </motion.div>
             ))}
@@ -1026,6 +1092,357 @@ function FloatingRSVPButton({ onClick }: { onClick: () => void }) {
     </motion.button>
   );
 }
+
+
+
+type EventIconType = "church" | "cocktail-camera" | "dining" | "party";
+
+function EventIcon({ type }: { type: EventIconType }) {
+  const baseClass =
+    "h-10 w-10 text-[#b88a3d] drop-shadow-[0_0_10px_rgba(201,167,107,0.35)] sm:h-12 sm:w-12";
+
+  if (type === "church") {
+    return (
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 64 64"
+        fill="none"
+        className={baseClass}
+      >
+        <path
+          d="M32 7v14"
+          stroke="currentColor"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+        />
+        <path
+          d="M25.5 14h13"
+          stroke="currentColor"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+        />
+        <path
+          d="M13 56h38"
+          stroke="currentColor"
+          strokeWidth="2.6"
+          strokeLinecap="round"
+        />
+        <path
+          d="M18 56V30.5L32 20l14 10.5V56"
+          stroke="currentColor"
+          strokeWidth="2.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M25 56V43a7 7 0 0 1 14 0v13"
+          stroke="currentColor"
+          strokeWidth="2.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M23 32h18"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          opacity="0.65"
+        />
+      </svg>
+    );
+  }
+
+  if (type === "cocktail-camera") {
+    return (
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 82 64"
+        fill="none"
+        className="h-10 w-14 text-[#b88a3d] drop-shadow-[0_0_10px_rgba(201,167,107,0.35)] sm:h-12 sm:w-16"
+      >
+        <path
+          d="M12 11h24L27 28h-6L12 11Z"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M24 28v19"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+        />
+        <path
+          d="M16 47h16"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+        />
+        <path
+          d="M50 20h8l3-4h8l3 4h4a4 4 0 0 1 4 4v22a4 4 0 0 1-4 4H50a4 4 0 0 1-4-4V24a4 4 0 0 1 4-4Z"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinejoin="round"
+        />
+        <circle
+          cx="63"
+          cy="35"
+          r="7.5"
+          stroke="currentColor"
+          strokeWidth="2.4"
+        />
+        <path
+          d="M67 24h5"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          opacity="0.65"
+        />
+      </svg>
+    );
+  }
+
+  if (type === "dining") {
+    return (
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 82 64"
+        fill="none"
+        className="h-10 w-14 text-[#b88a3d] drop-shadow-[0_0_10px_rgba(201,167,107,0.35)] sm:h-12 sm:w-16"
+      >
+        <path
+          d="M18 12v40"
+          stroke="currentColor"
+          strokeWidth="2.7"
+          strokeLinecap="round"
+        />
+        <path
+          d="M12 12v16M18 12v16M24 12v16M12 28c0 4 12 4 12 0"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <circle
+          cx="43"
+          cy="32"
+          r="16"
+          stroke="currentColor"
+          strokeWidth="2.7"
+        />
+        <circle
+          cx="43"
+          cy="32"
+          r="9.5"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          opacity="0.6"
+        />
+        <path
+          d="M69 12c-5.5 5.2-7 11.7-7 20.5h8.5V52"
+          stroke="currentColor"
+          strokeWidth="2.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
+
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 82 64"
+      fill="none"
+      className="h-10 w-14 text-[#b88a3d] drop-shadow-[0_0_10px_rgba(201,167,107,0.35)] sm:h-12 sm:w-16"
+    >
+      <path
+        d="M41 7v8"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+      <circle
+        cx="41"
+        cy="36"
+        r="18"
+        stroke="currentColor"
+        strokeWidth="2.7"
+      />
+      <path
+        d="M25 28h32M24 36h34M27 44h28"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        opacity="0.75"
+      />
+      <path
+        d="M33 19c-3 10-3 24 0 34M49 19c3 10 3 24 0 34M41 18v36"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        opacity="0.75"
+      />
+      <path
+        d="M20 18 14 13M62 18l6-5M16 36H8M66 36h8M23 54l-5 5M59 54l5 5"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        opacity="0.7"
+      />
+      <path
+        d="M18 8 20 4l2 4 4 2-4 2-2 4-2-4-4-2 4-2ZM64 6l1.5-3L67 6l3 1.5L67 9l-1.5 3L64 9l-3-1.5L64 6ZM10 48l1.5-3 1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5ZM70 48l1.5-3 1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+        opacity="0.85"
+      />
+      <path
+        d="M35 30h4M44 30h4M35 39h4M44 39h4"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function HourglassIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 64 64"
+      fill="none"
+      className="h-14 w-14"
+    >
+      <path
+        d="M20 8h24M20 56h24"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <path
+        d="M23 10c0 12 5 17 9 22-4 5-9 10-9 22M41 10c0 12-5 17-9 22 4 5 9 10 9 22"
+        stroke="currentColor"
+        strokeWidth="2.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M26 19h12M28 45h8M32 32v8"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        opacity="0.72"
+      />
+      <path
+        d="M28 25c2 2 6 2 8 0M27 48c3-4 7-4 10 0"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        opacity="0.55"
+      />
+    </svg>
+  );
+}
+
+
+function EventActionButtons({ onComingSoon }: { onComingSoon: () => void }) {
+  return (
+    <div className="mx-auto flex w-full max-w-5xl flex-col items-center justify-center gap-4 px-4 py-14 sm:flex-row sm:gap-5 sm:py-20">
+      <motion.button
+        type="button"
+        onClick={onComingSoon}
+        whileHover={{ scale: 1.05, y: -2 }}
+        whileTap={{ scale: 0.96 }}
+        className={`${playfair.className} w-full max-w-sm rounded-full border border-[#c9a76b]/70 bg-[#f8efe2]/90 px-7 py-4 text-[0.72rem] font-black uppercase tracking-[0.28em] text-[#a77b34] shadow-[0_18px_60px_rgba(36,59,90,0.12)] backdrop-blur-md transition hover:border-[#b88a3d] hover:bg-[#fff8ed] sm:w-auto sm:px-12 sm:text-xs`}
+      >
+        Menu
+      </motion.button>
+
+      <motion.button
+        type="button"
+        onClick={onComingSoon}
+        whileHover={{ scale: 1.05, y: -2 }}
+        whileTap={{ scale: 0.96 }}
+        className={`${playfair.className} w-full max-w-sm rounded-full border border-[#c9a76b]/70 bg-[#f8efe2]/90 px-7 py-4 text-[0.72rem] font-black uppercase tracking-[0.28em] text-[#a77b34] shadow-[0_18px_60px_rgba(36,59,90,0.12)] backdrop-blur-md transition hover:border-[#b88a3d] hover:bg-[#fff8ed] sm:w-auto sm:px-12 sm:text-xs`}
+      >
+        Upload Wedding Content
+      </motion.button>
+    </div>
+  );
+}
+
+function ComingSoonModal({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-[220] flex items-center justify-center bg-[#243b5a]/20 px-4 backdrop-blur-xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.button
+            type="button"
+            aria-label="Close coming soon modal"
+            onClick={onClose}
+            className="absolute inset-0"
+          />
+
+          <motion.div
+            initial={{ opacity: 0, y: 28, scale: 0.94, filter: "blur(10px)" }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+            exit={{ opacity: 0, y: 18, scale: 0.96, filter: "blur(10px)" }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="relative w-full max-w-md overflow-hidden rounded-[2.2rem] border border-white/50 bg-white/25 px-6 py-8 text-center shadow-[0_34px_120px_rgba(36,59,90,0.34)] backdrop-blur-2xl sm:px-9 sm:py-10"
+          >
+            <div className="absolute -left-20 -top-20 h-48 w-48 rounded-full bg-[#fff8ed]/45 blur-3xl" />
+            <div className="absolute -bottom-24 -right-20 h-56 w-56 rounded-full bg-[#b9cce2]/45 blur-3xl" />
+            <div className="absolute inset-0 bg-gradient-to-br from-white/42 via-[#fff8ed]/18 to-white/12" />
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute right-5 top-5 z-20 rounded-full border border-[#c9a76b]/50 bg-[#fff8ed]/65 px-3 py-1 text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#9c8261] shadow-[0_10px_30px_rgba(36,59,90,0.1)] transition hover:bg-[#fff8ed]"
+            >
+              Close
+            </button>
+
+            <div className="relative z-10 flex flex-col items-center">
+              <h2
+                className={`${playfair.className} mt-5 text-4xl font-black text-[#243b5a] sm:text-5xl`}
+              >
+                Coming soon...
+              </h2>
+
+              <motion.div
+                className="my-7 flex h-20 w-20 items-center justify-center text-[#b88a3d] drop-shadow-[0_0_18px_rgba(201,167,107,0.65)]"
+                animate={{ rotate: 360 }}
+                transition={{
+                  duration: 2.4,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+              >
+                <HourglassIcon />
+              </motion.div>
+
+              <p className="max-w-xs text-center text-sm font-bold leading-7 text-[#4d5f78] sm:text-base">
+                (button will become functional on wedding day)
+              </p>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 
 function ModalShell({
   open,
@@ -1667,6 +2084,7 @@ function HeroSection() {
   const [hoveredFrame, setHoveredFrame] = useState<string | null>(null);
   const [rsvpOpen, setRsvpOpen] = useState(false);
   const [registryOpen, setRegistryOpen] = useState(false);
+  const [comingSoonOpen, setComingSoonOpen] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: heroScrollRef,
@@ -1727,6 +2145,10 @@ function HeroSection() {
       <RegistryModal
         open={registryOpen}
         onClose={() => setRegistryOpen(false)}
+      />
+      <ComingSoonModal
+        open={comingSoonOpen}
+        onClose={() => setComingSoonOpen(false)}
       />
       <RSVPModal open={rsvpOpen} onClose={() => setRsvpOpen(false)} />
 
@@ -1852,8 +2274,10 @@ function HeroSection() {
                 initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 1.2, delay: 0.75 }}
+                className="flex flex-col items-center"
               >
                 <CountdownTimer />
+                <ScrollDownArrow />
               </motion.div>
             </div>
           </div>
@@ -1865,6 +2289,10 @@ function HeroSection() {
 
         <section className="relative z-50 bg-[#f3e7d6] px-4 py-12 sm:py-20">
           <OrderOfDaySection />
+        </section>
+
+        <section className="relative z-50 bg-[#f3e7d6]">
+          <EventActionButtons onComingSoon={() => setComingSoonOpen(true)} />
         </section>
       </section>
     </>
