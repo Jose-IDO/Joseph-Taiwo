@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import {
   useEffect,
   useRef,
@@ -677,8 +678,21 @@ function DressCodeSection() {
             <h3
               className={`${playfair.className} mb-5 text-3xl font-black text-[#243b5a] sm:text-4xl`}
             >
-              Formal Attire
+              Formal
             </h3>
+        
+            <h3
+              className={`${playfair.className} mb-5 text-3xl font-black text-[#243b5a] sm:text-4xl`}
+            >
+            Or
+            </h3>
+
+            <h3
+              className={`${playfair.className} mb-5 text-3xl font-black text-[#243b5a] sm:text-4xl`}
+            >
+              Traditional Attire
+            </h3>
+
 
             <div className="space-y-4 text-base leading-7 text-[#4d5f78]">
               <p>
@@ -699,6 +713,9 @@ function DressCodeSection() {
               <p>
                 <span className="font-black text-[#243b5a]">Gentlemen:</span>{" "}
                 Black Tie Optional or Traditional Attire.
+              </p>
+              <p>
+                <span className="font-black text-[#243b5a]">For all our guests who would like to purchase aso ebi ( wedding traditional attire ), please contact 084 451 0707   / 066 265 7456 </span>{" "}
               </p>
             </div>
           </div>
