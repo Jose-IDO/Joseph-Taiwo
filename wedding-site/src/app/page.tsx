@@ -1894,24 +1894,48 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
               Please enter your family surname so we can find your invitation.
             </p>
 
-            <div className="mx-auto mb-5 grid max-w-md grid-cols-2 gap-2 rounded-[1.4rem] border border-[#c9a76b]/35 bg-[#fff8ed]/70 p-2 shadow-[0_14px_42px_rgba(36,59,90,0.08)]">
-              {[
-                { value: "bride-groom" as const, label: "Bride & Groom" },
-                { value: "parents" as const, label: "Parents" },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => setSelectedGuestGroup(option.value)}
-                  className={`${playfair.className} rounded-full px-3 py-2.5 text-[0.62rem] font-black uppercase tracking-[0.18em] transition sm:text-xs ${
-                    selectedGuestGroup === option.value
-                      ? "bg-[#243b5a] text-[#fff8ed] shadow-[0_14px_34px_rgba(36,59,90,0.18)]"
-                      : "bg-[#f8efe2]/70 text-[#9c8261] hover:bg-[#fff8ed]"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              ))}
+            <div className="mx-auto mb-5 max-w-md rounded-[1.4rem] border border-[#c9a76b]/35 bg-[#fff8ed]/70 p-2 shadow-[0_14px_42px_rgba(36,59,90,0.08)]">
+              <div className="relative grid grid-cols-2 overflow-hidden rounded-full bg-[#f8efe2]/80 p-1">
+                <motion.div
+                  className="absolute bottom-1 top-1 rounded-full bg-[#243b5a] shadow-[0_14px_34px_rgba(36,59,90,0.18)]"
+                  initial={false}
+                  animate={{
+                    left: selectedGuestGroup === "bride-groom" ? "0.25rem" : "50%",
+                    right:
+                      selectedGuestGroup === "bride-groom" ? "50%" : "0.25rem",
+                  }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 260,
+                    damping: 28,
+                    mass: 0.7,
+                  }}
+                />
+
+                {[
+                  {
+                    value: "bride-groom" as const,
+                    label: "Guest of Bride & Groom",
+                  },
+                  {
+                    value: "parents" as const,
+                    label: "Guest of Parents",
+                  },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setSelectedGuestGroup(option.value)}
+                    className={`${playfair.className} relative z-10 rounded-full px-2 py-3 text-[0.54rem] font-black uppercase tracking-[0.12em] transition-colors duration-300 sm:px-3 sm:text-[0.68rem] sm:tracking-[0.16em] ${
+                      selectedGuestGroup === option.value
+                        ? "text-[#fff8ed]"
+                        : "text-[#9c8261] hover:text-[#243b5a]"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <input
