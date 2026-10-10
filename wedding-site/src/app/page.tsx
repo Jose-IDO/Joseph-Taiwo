@@ -43,6 +43,7 @@ type GuestGroup = "bride-groom" | "parents";
 type FamilyMember = {
   id: string;
   fullName: string;
+  rsvpStatus: string;
   attendingWedding: boolean;
   attendingChurch: boolean;
   churchEligible: boolean;
@@ -781,24 +782,18 @@ function MapPinIcon({ active = false }: { active?: boolean }) {
 }
 
 function LocationMapsSection() {
-  const [activeLocation, setActiveLocation] = useState<
-    "church" | "reception" | null
-  >(null);
+  const [activeLocation, setActiveLocation] = useState<"reception" | null>(
+    null
+  );
 
-    const locations = [
-      {
-        id: "church" as const,
-        title: "Church Ceremony",
-        address: "St Hilda Parish Church, Pretoria, South Africa",
-        mapQuery: "St Hilda Parish Church Pretoria South Africa",
-      },
-      {
-        id: "reception" as const,
-        title: "Reception",
-        address: "Silver Lakes Farm Hotel, Pretoria, South Africa",
-        mapQuery: "Silver Lakes Farm Hotel Pretoria South Africa",
-      },
-    ];
+  const locations = [
+    {
+      id: "reception" as const,
+      title: "Reception",
+      address: "Silver Lakes Farm Hotel, Pretoria, South Africa",
+      mapQuery: "Silver Lakes Farm Hotel Pretoria South Africa",
+    },
+  ];
 
   return (
     <motion.div
@@ -1083,12 +1078,12 @@ function RegistrySection() {
 function OrderOfDaySection() {
   const events = [
     {
-      time: "11:00",
+      time: "10:00",
       title: "Church Ceremony",
       icon: "church" as const,
     },
     {
-      time: "13:30",
+      time: "13:00",
       title: "Cocktail Hour & Photography",
       icon: "cocktail-camera" as const,
     },
@@ -1884,6 +1879,7 @@ function applyFamilyResponse(data: any) {
       data.members.map((member: any) => ({
         id: member.id,
         fullName: member.fullName,
+        rsvpStatus: member.rsvpStatus ?? "pending",
         attendingWedding: Boolean(member.attendingWedding),
         attendingChurch: Boolean(member.attendingChurch),
         churchEligible: member.churchEligible !== false,
@@ -2008,6 +2004,11 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
 
     if (!member.contactPhone.trim()) {
       setErrorMessage(`Please enter a cellphone number for ${member.fullName}.`);
+      return;
+    }
+
+    if (member.rsvpStatus === "submitted") {
+      setErrorMessage(`${member.fullName}'s RSVP has already been received.`);
       return;
     }
 
@@ -2250,7 +2251,10 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
             </div>
 
             <div className="mb-4 space-y-3 text-left">
-              {familyMembers.map((member) => (
+              {familyMembers.map((member) => {
+                const hasSubmitted = member.rsvpStatus === "submitted";
+
+                return (
                 <div
                   key={member.id}
                   className="rounded-2xl border border-[#c9a76b]/30 bg-[#fff8ed]/75 px-4 py-3 shadow-[0_12px_40px_rgba(36,59,90,0.08)]"
@@ -2265,6 +2269,7 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
                     <input
                       type="email"
                       value={member.contactEmail}
+                      disabled={hasSubmitted}
                       onChange={(event) =>
                         updateMemberContact(
                           member.id,
@@ -2279,6 +2284,7 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
                     <input
                       type="tel"
                       value={member.contactPhone}
+                      disabled={hasSubmitted}
                       onChange={(event) =>
                         updateMemberContact(
                           member.id,
@@ -2301,6 +2307,7 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
                     <input
                       type="checkbox"
                       checked={member.unableToAttend}
+                      disabled={hasSubmitted}
                       onChange={() => toggleUnableToAttend(member.id)}
                       className="h-4 w-4 accent-[#b91c1c]"
                     />
@@ -2321,7 +2328,7 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
                       <input
                         type="checkbox"
                         checked={member.attendingWedding}
-                        disabled={member.unableToAttend}
+                        disabled={hasSubmitted || member.unableToAttend}
                         onChange={() => toggleWeddingAttendance(member.id)}
                         className="h-4 w-4 accent-[#b88a3d]"
                       />
@@ -2335,12 +2342,20 @@ async function handleSurnameSubmit(event: React.FormEvent<HTMLFormElement>) {
                   <button
                     type="button"
                     onClick={() => submitMemberRsvp(member)}
-                    className={`${playfair.className} mt-3 w-full rounded-full border border-[#c9a76b] bg-[#243b5a] px-5 py-3 text-[0.68rem] font-black uppercase tracking-[0.22em] text-[#fff8ed] shadow-[0_16px_45px_rgba(36,59,90,0.16)] transition hover:bg-[#314a6d]`}
+                    disabled={hasSubmitted}
+                    className={`${playfair.className} mt-3 w-full rounded-full border border-[#c9a76b] px-5 py-3 text-[0.68rem] font-black uppercase tracking-[0.22em] text-[#fff8ed] shadow-[0_16px_45px_rgba(36,59,90,0.16)] transition ${
+                      hasSubmitted
+                        ? "cursor-not-allowed bg-[#9c8261]/55"
+                        : "bg-[#243b5a] hover:bg-[#314a6d]"
+                    }`}
                   >
-                    Submit RSVP for {member.fullName.split(" ")[0]}
+                    {hasSubmitted
+                      ? "RSVP already received"
+                      : `Submit RSVP for ${member.fullName.split(" ")[0]}`}
                   </button>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="mb-5 rounded-[1.4rem] border border-[#c9a76b]/40 bg-[#fff8ed]/75 p-4 text-center shadow-[0_16px_50px_rgba(36,59,90,0.08)]">
@@ -2588,7 +2603,7 @@ function HeroSection() {
                 </p>
 
                 <p className="max-w-[92vw] text-sm tracking-[0.1em] text-[#243b5a] min-[390px]:text-base sm:text-xl sm:tracking-[0.2em] md:text-3xl">
-                  St Hilda Parish Church × Silver Lakes Farm Hotel · Pretoria
+                  Silver Lakes Farm Hotel · Pretoria
                 </p>
 
                 <div className="mt-3 flex items-center gap-3 text-[#c9a76b] sm:mt-5 sm:gap-4">
