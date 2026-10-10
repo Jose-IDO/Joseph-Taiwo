@@ -34,6 +34,22 @@ export async function POST(request: Request) {
     const batch = adminDb.batch();
     const submittedAt = FieldValue.serverTimestamp();
 
+    const memberRefs = (members as SubmittedMember[]).map((member) =>
+      familyRef.collection("members").doc(member.id)
+    );
+    const existingMembers = await Promise.all(memberRefs.map((ref) => ref.get()));
+
+    if (existingMembers.some((member) => !member.exists)) {
+      return NextResponse.json({ error: "Guest not found" }, { status: 404 });
+    }
+
+    if (existingMembers.some((member) => member.data()?.rsvpStatus === "submitted")) {
+      return NextResponse.json(
+        { error: "This RSVP has already been submitted." },
+        { status: 409 }
+      );
+    }
+
     batch.update(familyRef, {
       rsvpStatus: "submitted",
       submittedAt,
